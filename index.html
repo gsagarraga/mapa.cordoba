@@ -273,6 +273,30 @@
     color:var(--ink-soft);
   }
 
+  .main-actions{
+    display:flex;
+    gap:.5rem;
+    margin-top:.8rem;
+  }
+  .main-action-btn{
+    flex:1 1 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.4rem;
+    font:inherit;
+    font-size:.78rem;
+    padding:.5rem .6rem;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#fff;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .main-action-btn:hover{ border-color:var(--wine); color:var(--wine-dark); }
+  .main-action-btn svg{ width:14px; height:14px; flex:0 0 auto; }
+
   .compare-cta{
     display:flex;
     align-items:center;
@@ -472,6 +496,22 @@
   input#year-slider{
     width:100%; accent-color:var(--accent);
   }
+  .year-slider-row{ display:flex; align-items:center; gap:.5rem; }
+  .year-slider-row input#year-slider{ flex:1; }
+  .year-play-btn{
+    flex:0 0 auto;
+    width:26px; height:26px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--wine-pale);
+    color:var(--wine-dark);
+    cursor:pointer;
+    padding:0;
+  }
+  .year-play-btn:hover{ background:var(--wine); color:#fff; }
+  .year-play-btn svg{ width:13px; height:13px; }
+  .year-play-btn.playing{ background:var(--wine); color:#fff; }
   .legend-scale{
     display:flex; flex-direction:column; gap:.25rem; margin-top:.7rem;
     font-size:.76rem; color:var(--ink-soft);
@@ -637,6 +677,61 @@
     .compare-grid{ grid-template-columns:1fr; grid-template-rows:1fr auto 1fr; overflow-y:auto; }
     .compare-divider{ width:auto; height:1.6rem; }
     .compare-mapcanvas{ min-height:260px; }
+  }
+
+  /* ===================== Vista de tabla ===================== */
+  #tableApp{
+    position:fixed; inset:0;
+    z-index:60;
+    background:var(--bg);
+    display:none;
+    flex-direction:column;
+  }
+  body.mode-table #tableApp{ display:flex; }
+  body.mode-table .page{ display:none; }
+
+  .table-wrap{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    padding:0 1.4rem 1.4rem;
+  }
+  #dataTable{
+    width:100%;
+    border-collapse:collapse;
+    font-family:"Rubik",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:.84rem;
+    background:var(--panel);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  #dataTable th, #dataTable td{
+    padding:.55rem .8rem;
+    text-align:right;
+    white-space:nowrap;
+    border-bottom:1px solid var(--border);
+  }
+  #dataTable th:first-child, #dataTable td:first-child{ text-align:left; position:sticky; left:0; background:var(--panel); }
+  #dataTable thead th{
+    position:sticky; top:0;
+    background:var(--wine-pale);
+    color:var(--wine-dark);
+    font-weight:600;
+    cursor:pointer;
+    user-select:none;
+    z-index:2;
+  }
+  #dataTable thead th:first-child{ z-index:3; }
+  #dataTable thead th:hover{ background:var(--wine-light); color:#fff; }
+  #dataTable thead th.sorted::after{ content:" ▾"; font-size:.7em; }
+  #dataTable thead th.sorted.asc::after{ content:" ▴"; font-size:.7em; }
+  #dataTable tbody tr:nth-child(even){ background:rgba(0,0,0,.015); }
+  #dataTable tbody tr:hover{ background:var(--wine-pale); cursor:pointer; }
+  #dataTable td.principal-col, #dataTable th.principal-col{ font-weight:700; color:var(--wine-dark); }
+
+  @media (max-width:720px){
+    #dataTable{ font-size:.76rem; }
+    #dataTable th, #dataTable td{ padding:.4rem .55rem; }
   }
 </style>
 </head>
@@ -1317,7 +1412,7 @@
 		l0.071-0.442l1.868,0.306l5.18,0.844l-0.202,2.785l6.318,1.156l-0.135,0.74L172.19,47.573"/>
 </g>
 <g id="g130" transform="matrix(11.8081,0,0,11.8081,-831.71707,15.675997)">
-	<path id="dept-colon" data-slug="colon" data-name="Colón" tabindex="0" role="button" aria-label="Colón" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
+	<path id="dept-punilla" data-slug="punilla" data-name="Punilla" tabindex="0" role="button" aria-label="Punilla" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
 		M112.131,48.046l3.762-0.073l0.025,0.16l0.049,0.317l0.802-0.119l0.012,0.758l0.054,3.47l2.316,0.131l0.041,0.442l0.018,0.228
 		l0.012,0.228l-0.001,0.229l0.016,0.228l0.029,0.227l0.021,0.227l0.025,0.227l0.033,0.226l0.042,0.225l0.046,0.224l0.053,0.222
 		l0.072,0.218l0.083,0.215l0.068,0.217l0.003,0.226l-0.005,0.038l-0.024,0.191l-0.031,0.226l-0.056,0.224l0.008,0.224l0.041,0.225
@@ -1461,7 +1556,7 @@
 		l0.014-1.513l0.535-1.387l1.082-2.804l1.08-2.805l1.078-2.805l0.668-1.741l0.409-1.065l1.075-2.806L76.863,46.639"/>
 </g>
 <g id="g140" transform="matrix(11.8081,0,0,11.8081,-831.71707,15.675997)">
-	<path id="dept-punilla" data-slug="punilla" data-name="Punilla" tabindex="0" role="button" aria-label="Punilla" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
+	<path id="dept-colon" data-slug="colon" data-name="Colón" tabindex="0" role="button" aria-label="Colón" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
 		M142.115,61.506l-0.054,2.713l-0.494,0.057l0.577,0.712l-0.379,0.461l-0.701,0.084l-0.003,0.516l-0.005,1.033l-0.026,5.264
 		l-3.147,0.148l-0.127,2.609l0.005,0l-0.062,0.589l1.106,0.151l-0.005,0.034l-0.108,0.908l-1.044-0.065l-0.081,3.324l-0.558-0.085
 		l-0.239,0.005l-0.219-0.077l-0.192-0.135l-0.198-0.125l-0.207-0.113l-0.208-0.11l-0.179-0.149l-0.188-0.134l-0.215-0.048
@@ -1682,7 +1777,7 @@
 		l0.227,0.058l0.236,0.018l0.238,0.006H106.373"/>
 </g>
 <g id="g178" transform="matrix(11.8081,0,0,11.8081,-831.71707,15.675997)">
-	<path id="dept-san-javier" data-slug="san-javier" data-name="San Javier" tabindex="0" role="button" aria-label="San Javier" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
+	<path id="dept-calamuchita" data-slug="calamuchita" data-name="Calamuchita" tabindex="0" role="button" aria-label="Calamuchita" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
 		M126.829,102.902l-0.003,0.012l-0.016,0.228v0.011v0.218l0.028,0.226l0.045,0.225l0.024,0.227l0.004,0.229l-0.024,0.227
 		l-0.048,0.224l-0.056,0.222l-0.086,0.213l-0.073,0.217l-0.028,0.227l-0.022,0.227l-0.049,0.223l-0.057,0.222l-0.046,0.224
 		l-0.042,0.225l-0.047,0.224l-0.027,0.226l-0.014,0.228l-0.006,0.228l0.008,0.229l0.007,0.228l0.006,0.228l-0.001,0.228
@@ -1738,7 +1833,7 @@
 		l-0.073,0.218l-0.062,0.22l-0.056,0.222l-0.059,0.222L126.829,102.902"/>
 </g>
 <g id="g186" transform="matrix(11.8081,0,0,11.8081,-831.71707,15.675997)">
-	<path id="dept-calamuchita" data-slug="calamuchita" data-name="Calamuchita" tabindex="0" role="button" aria-label="Calamuchita" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
+	<path id="dept-san-javier" data-slug="san-javier" data-name="San Javier" tabindex="0" role="button" aria-label="San Javier" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
 		M102.675,98.478l-0.137,0.055l-0.217,0.096l-0.193,0.132l-0.154,0.173l-0.178,0.131l-0.06,0.223l-0.038,0.226l-0.021,0.228
 		l-0.016,0.228l-0.003,0.228l0.012,0.228l0.012,0.228l0.012,0.228l0.013,0.228l0.017,0.228l-0.001,0.228l-0.034,0.226l-0.111,0.201
 		l-0.123,0.195l-0.068,0.218l-0.021,0.175l-0.006,0.053l0.021,0.226l0.088,0.213l0.071,0.217l-0.026,0.226l-0.054,0.223l0.081,0.212
@@ -1894,7 +1989,7 @@
 		l0.904-3.951L203.499,105.343"/>
 </g>
 <g id="g212" transform="matrix(11.8081,0,0,11.8081,-831.71707,15.675997)">
-	<path id="dept-juarez-celman" data-slug="juarez-celman" data-name="Juárez Celman" tabindex="0" role="button" aria-label="Juárez Celman" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
+	<path id="dept-rio-cuarto" data-slug="rio-cuarto" data-name="Río Cuarto" tabindex="0" role="button" aria-label="Río Cuarto" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
 		M127.488,115.897l0.113-0.053l0.155-0.171l0.098-0.209l0.154-0.173l0.233-0.054l0.238-0.031l0.239-0.02l0.239-0.013l0.239-0.01
 		l0.24,0.007l0.243,0.002l0.195-0.101l0.148-0.181l0.241-0.001l0.146,0.013l0.092,0.008l0.239,0.011h0.24l0.24-0.001l0.239,0.002
 		l0.24,0.009l0.238,0.018l0.239,0.019l0.238,0.022l0.238,0.034l0.236,0.037l0.236,0.036l0.236,0.044l0.229,0.066l0.225,0.078
@@ -1997,7 +2092,7 @@
 		l0.295-0.921l2.38,0.51L127.488,115.897"/>
 </g>
 <g id="g230" transform="matrix(11.8081,0,0,11.8081,-831.71707,15.675997)">
-	<path id="dept-rio-cuarto" data-slug="rio-cuarto" data-name="Río Cuarto" tabindex="0" role="button" aria-label="Río Cuarto" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
+	<path id="dept-juarez-celman" data-slug="juarez-celman" data-name="Juárez Celman" tabindex="0" role="button" aria-label="Juárez Celman" class="depto" fill="#E8E9D6" stroke="#000000" stroke-width="0.2559" stroke-linecap="square" stroke-linejoin="bevel" d="
 		M153.079,136.239l0.832,0.165l0.12,0.023l-0.3,1.862l3.815,1.636l0.731-2.641l2.073,0.415l-1.781,7.706l-2.31-0.403l-0.782,3.455
 		l-0.001,0.003l5.626,1.244l0.457-1.727l4.151,0.938l-1.101,4.383l5.452,1.133l-0.007,0.028l-5.436,22.852l-0.119,0.497
 		l-12.029-0.067l-1.852,0.006l-15.943,0.012l0.012-7.29l5.537-0.166l-0.083-7.098l-0.13-11.28l-0.233-0.062l-0.233-0.062
@@ -6284,7 +6379,13 @@
 
       <div class="control-row" id="year-row">
         <label for="year-slider">Año <span class="val" id="year-val">2024</span></label>
-        <input type="range" id="year-slider" min="0" max="20" step="1" value="20">
+        <div class="year-slider-row">
+          <button class="year-play-btn" id="year-play-btn" type="button" aria-label="Animar años" title="Animar años">
+            <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+          </button>
+          <input type="range" id="year-slider" min="0" max="20" step="1" value="20">
+        </div>
       </div>
 
       <div class="control-row" style="margin-bottom:0;">
@@ -6295,6 +6396,17 @@
       <div class="legend-scale">
         <div class="bar" id="scale-bar"></div>
         <div class="caps"><span id="scale-min">–</span><span id="scale-max">–</span></div>
+      </div>
+
+      <div class="main-actions">
+        <button class="main-action-btn" id="tableToggle" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          Ver tabla
+        </button>
+        <button class="main-action-btn" id="mainShare" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+          <span id="mainShareLabel">Compartir</span>
+        </button>
       </div>
     </div>
 
@@ -6377,6 +6489,25 @@
       </div>
       <div class="compare-mapcanvas" id="cmp-map-B"></div>
     </section>
+  </div>
+</div>
+
+<div id="tableApp">
+  <div class="compare-topbar">
+    <h2>Tabla de <span id="table-title">datos</span></h2>
+    <div class="compare-topbar-actions">
+      <button class="compare-btn" id="tableDownloadCsv" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+        Descargar CSV
+      </button>
+      <button class="compare-btn compare-btn-close" id="tableExit" type="button">✕ Cerrar</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="dataTable">
+      <thead><tr id="dataTableHead"></tr></thead>
+      <tbody id="dataTableBody"></tbody>
+    </table>
   </div>
 </div>
 
@@ -6962,6 +7093,199 @@
       }
     });
     document.body.classList.add('mode-compare');
+  })();
+
+  // ---------------------------------------------------------------
+  // Botón "animar años" (vista principal)
+  // ---------------------------------------------------------------
+  const yearPlayBtn = document.getElementById('year-play-btn');
+  const iconPlay = yearPlayBtn.querySelector('.icon-play');
+  const iconPause = yearPlayBtn.querySelector('.icon-pause');
+  let yearAnimTimer = null;
+
+  function stopYearAnim(){
+    if(yearAnimTimer){
+      clearInterval(yearAnimTimer);
+      yearAnimTimer = null;
+      yearPlayBtn.classList.remove('playing');
+      iconPlay.style.display = '';
+      iconPause.style.display = 'none';
+    }
+  }
+  function startYearAnim(){
+    const cat = activeCat();
+    if(!cat.hasYears) return;
+    yearPlayBtn.classList.add('playing');
+    iconPlay.style.display = 'none';
+    iconPause.style.display = '';
+    yearAnimTimer = setInterval(function(){
+      let v = +yearSlider.value + 1;
+      if(v > +yearSlider.max) v = 0;
+      yearSlider.value = v;
+      updateMap();
+    }, 700);
+  }
+  yearPlayBtn.addEventListener('click', function(){
+    if(yearAnimTimer) stopYearAnim(); else startYearAnim();
+  });
+  // si cambia la categoría (o no tiene años), corto la animación en curso
+  categorySelect.addEventListener('change', stopYearAnim);
+
+  // ---------------------------------------------------------------
+  // Vista de tabla (otra pantalla): todos los departamentos x variables
+  // de la categoría activa
+  // ---------------------------------------------------------------
+  const tableTitleEl = document.getElementById('table-title');
+  const tableHead = document.getElementById('dataTableHead');
+  const tableBody = document.getElementById('dataTableBody');
+  let tableSort = { col: 'name', dir: 'desc' };
+
+  function renderDataTable(){
+    const cat = activeCat();
+    const year = cat.hasYears ? currentYear() : null;
+    tableTitleEl.textContent = cat.label + (cat.hasYears ? ' · ' + year : '');
+
+    const cols = cat.variables; // [{code,label}], primero el principal ya viene así ordenado en los datos originales
+    // encabezado
+    tableHead.innerHTML = '<th data-col="name">Departamento</th>' + cols.map(function(v){
+      const cls = v.code === cat.mainCode ? ' class="principal-col"' : '';
+      return '<th data-col="'+v.code+'"'+cls+'>'+v.label+'</th>';
+    }).join('');
+
+    // filas
+    let rows = Object.keys(DEPARTAMENTOS).map(function(slug){
+      const row = { slug: slug, name: DEPARTAMENTOS[slug].name };
+      cols.forEach(function(v){ row[v.code] = cat.getValue(slug, v.code, year); });
+      return row;
+    });
+
+    rows.sort(function(a,b){
+      let av = a[tableSort.col], bv = b[tableSort.col];
+      if(tableSort.col === 'name'){ av = av.toLowerCase(); bv = bv.toLowerCase(); }
+      if(av < bv) return tableSort.dir === 'asc' ? -1 : 1;
+      if(av > bv) return tableSort.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    tableBody.innerHTML = rows.map(function(row){
+      const cells = cols.map(function(v){
+        const cls = v.code === cat.mainCode ? ' class="principal-col"' : '';
+        return '<td'+cls+'>'+fmt.format(row[v.code])+'</td>';
+      }).join('');
+      return '<tr data-slug="'+row.slug+'"><td>'+row.name+'</td>'+cells+'</tr>';
+    }).join('');
+
+    // marcar la columna ordenada
+    tableHead.querySelectorAll('th').forEach(function(th){
+      th.classList.remove('sorted','asc');
+      if(th.getAttribute('data-col') === tableSort.col){
+        th.classList.add('sorted');
+        if(tableSort.dir === 'asc') th.classList.add('asc');
+      }
+    });
+  }
+
+  tableHead.addEventListener('click', function(e){
+    const th = e.target.closest('th');
+    if(!th) return;
+    const col = th.getAttribute('data-col');
+    if(tableSort.col === col){
+      tableSort.dir = tableSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      tableSort.col = col;
+      tableSort.dir = col === 'name' ? 'asc' : 'desc';
+    }
+    renderDataTable();
+  });
+  tableBody.addEventListener('click', function(e){
+    const tr = e.target.closest('tr');
+    if(!tr) return;
+    openFicha(tr.getAttribute('data-slug'));
+  });
+
+  function enterTableMode(){
+    renderDataTable();
+    document.body.classList.add('mode-table');
+  }
+  function exitTableMode(){
+    document.body.classList.remove('mode-table');
+  }
+  document.getElementById('tableToggle').addEventListener('click', enterTableMode);
+  document.getElementById('tableExit').addEventListener('click', exitTableMode);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && document.body.classList.contains('mode-table')) exitTableMode();
+  });
+
+  document.getElementById('tableDownloadCsv').addEventListener('click', function(){
+    const cat = activeCat();
+    const year = cat.hasYears ? currentYear() : null;
+    const cols = cat.variables;
+    const header = ['Departamento'].concat(cols.map(function(v){ return v.label; }));
+    const lines = [header.join(';')];
+    Object.keys(DEPARTAMENTOS).forEach(function(slug){
+      const vals = cols.map(function(v){ return cat.getValue(slug, v.code, year); });
+      lines.push([DEPARTAMENTOS[slug].name].concat(vals).join(';'));
+    });
+    const csv = '\uFEFF' + lines.join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cordoba-' + categorySelect.value + (cat.hasYears ? '-'+year : '') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // si cambian año/variable/categoría mientras la tabla está abierta, la refresco
+  const _origUpdateMap = updateMap;
+  updateMap = function(){
+    _origUpdateMap();
+    if(document.body.classList.contains('mode-table')) renderDataTable();
+  };
+
+  // ---------------------------------------------------------------
+  // Compartir la vista principal (categoría + variable + año)
+  // ---------------------------------------------------------------
+  document.getElementById('mainShare').addEventListener('click', function(){
+    const cat = activeCat();
+    const params = new URLSearchParams();
+    params.set('cat', categorySelect.value);
+    params.set('var', variableSelect.value);
+    if(cat.hasYears) params.set('year', yearSlider.value);
+    const url = window.location.origin + window.location.pathname + '?' + params.toString();
+    const label = document.getElementById('mainShareLabel');
+    function marcarCopiado(){
+      label.textContent = 'Copiado ✓';
+      setTimeout(function(){ label.textContent = 'Compartir'; }, 1800);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(marcarCopiado).catch(function(){ window.prompt('Copiá el link:', url); });
+    } else {
+      window.prompt('Copiá el link:', url);
+    }
+  });
+
+  // si la URL trae parámetros de la vista principal (y no es de comparación), los aplico
+  (function initMainFromURL(){
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('compare') === '1') return;
+    const c = params.get('cat');
+    if(!c || !DATASETS[c]) return;
+    categorySelect.value = c;
+    const cat = DATASETS[c];
+    categoryTitle.textContent = cat.label;
+    categoryDesc.textContent = cat.desc;
+    populateVariables(cat);
+    syncYearRange(cat);
+    const v = params.get('var');
+    if(v) variableSelect.value = v;
+    const y = params.get('year');
+    if(y && cat.hasYears){
+      const idx = cat.years.indexOf(y);
+      if(idx >= 0) yearSlider.value = idx;
+    }
   })();
 
   // ---------------------------------------------------------------
