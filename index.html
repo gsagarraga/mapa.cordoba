@@ -7,6 +7,16 @@
 <meta name="description" content="Explorá los 26 departamentos de la Provincia de Córdoba (Argentina) con datos de Producto Bruto Regional, Censo 2022, matrícula educativa, cobertura de salud y hechos vitales. Mapa interactivo con fichas por departamento, rankings y modo de comparación.">
 <meta name="author" content="Gonzalo Sagarraga">
 <meta name="theme-color" content="#971b2f">
+
+<!-- Google Analytics 4 -->
+<!-- Reemplazá G-XXXXXXXXXX por tu Measurement ID real (Google Analytics > Administrar > Flujos de datos > tu flujo web) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
 <link rel="canonical" href="https://gsagarraga.github.io/mapa.cordoba/">
 
 <!-- Favicons -->
@@ -362,6 +372,26 @@
   }
   #tooltip.show{ opacity:1; }
 
+  .cmp-tooltip{
+    position:fixed;
+    pointer-events:none;
+    background:var(--ink);
+    color:#fdf8ee;
+    font-family:"Rubik",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:.8rem;
+    padding:.4rem .7rem;
+    border-radius:8px;
+    transform:translate(-50%,-135%);
+    opacity:0;
+    transition:opacity .1s ease;
+    z-index:70;
+    white-space:nowrap;
+    box-shadow:0 6px 16px -6px rgba(0,0,0,.4);
+  }
+  .cmp-tooltip .cmp-tooltip-name{ font-weight:600; }
+  .cmp-tooltip .cmp-tooltip-val{ color:#f0c9c9; margin-left:.4rem; }
+  .cmp-tooltip.show{ opacity:1; }
+
   /* modal / ficha */
   #overlay{
     position:fixed; inset:0;
@@ -427,6 +457,19 @@
     flex:0 0 auto;
   }
   #ficha button.close:hover{ background:rgba(0,0,0,.12); color:var(--ink); }
+  .ficha-top-actions{ display:flex; align-items:flex-start; gap:.4rem; flex:0 0 auto; }
+  .ficha-share-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:30px;height:30px;
+    border-radius:50%;
+    background:var(--wine-pale);
+    border:none;
+    color:var(--wine-dark);
+    cursor:pointer;
+  }
+  .ficha-share-btn:hover{ background:var(--wine); color:#fff; }
+  .ficha-share-btn svg{ width:15px; height:15px; }
+  .ficha-share-btn.busy{ opacity:.6; pointer-events:none; }
 
   #ficha-fields{
     display:flex;
@@ -674,9 +717,43 @@
   }
 
   @media (max-width:960px){
-    .compare-grid{ grid-template-columns:1fr; grid-template-rows:1fr auto 1fr; overflow-y:auto; }
-    .compare-divider{ width:auto; height:1.6rem; }
-    .compare-mapcanvas{ min-height:260px; }
+    .compare-topbar{ padding:.65rem .8rem; gap:.5rem; }
+    .compare-topbar h2{ font-size:.98rem; white-space:nowrap; }
+    .compare-topbar-actions{ gap:.4rem; }
+    .compare-btn{ padding:.4rem .55rem; font-size:.74rem; gap:.3rem; }
+    .compare-btn svg{ width:13px; height:13px; }
+
+    .compare-grid{
+      display:flex;
+      flex-direction:column;
+      overflow-y:auto;
+      padding:.8rem;
+      gap:.8rem;
+    }
+    .compare-col{
+      flex:0 0 auto;
+      padding:.85rem .9rem;
+    }
+    .compare-col-controls{ min-height:0; gap:.4rem; }
+    .compare-col-controls select{ font-size:.8rem; padding:.45rem .55rem; }
+    .compare-legend-scale{ margin-bottom:.5rem; }
+    .compare-mapcanvas{
+      height:auto;
+      min-height:0;
+      aspect-ratio: 1749 / 2700;
+      max-height:48vh;
+    }
+    .compare-mapcanvas svg{ height:auto; width:100%; max-height:100%; }
+    .compare-divider{
+      width:auto; height:auto;
+      padding:.1rem 0;
+      font-size:.8rem;
+    }
+  }
+
+  @media (max-width:420px){
+    .compare-topbar{ flex-wrap:wrap; row-gap:.5rem; }
+    .compare-topbar h2{ flex:1 1 100%; }
   }
 
   /* ===================== Vista de tabla ===================== */
@@ -6445,6 +6522,8 @@
 </div>
 
 <div id="tooltip"></div>
+<div id="cmp-tooltip-A" class="cmp-tooltip"></div>
+<div id="cmp-tooltip-B" class="cmp-tooltip"></div>
 
 <div id="compareApp">
   <div class="compare-topbar">
@@ -6529,7 +6608,12 @@
         <h3 id="ficha-title">Departamento</h3>
         <div class="depto-sub">Provincia de Córdoba</div>
       </div>
-      <button class="close" id="ficha-close" aria-label="Cerrar">✕</button>
+      <div class="ficha-top-actions">
+        <button class="ficha-share-btn" id="ficha-share-img" aria-label="Descargar como imagen" title="Descargar como imagen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
+        </button>
+        <button class="close" id="ficha-close" aria-label="Cerrar">✕</button>
+      </div>
     </div>
     <div id="ficha-fields"></div>
   </div>
@@ -6566,6 +6650,10 @@
   // principal + variables secundarias. Cada categoría define cómo
   // se lee su valor, para poder sumar nuevas planillas más adelante.
   // ---------------------------------------------------------------
+  function trackEvent(name, params){
+    if(typeof gtag === 'function') gtag('event', name, params || {});
+  }
+
   const DATASETS = {
     pbr: {
       label: 'Producto Bruto Regional',
@@ -6804,6 +6892,7 @@
     populateVariables(cat);
     syncYearRange(cat);
     updateMap();
+    trackEvent('change_category', { category: categorySelect.value });
   });
   yearSlider.addEventListener('input', updateMap);
   variableSelect.addEventListener('change', updateMap);
@@ -6939,6 +7028,7 @@
     openSlug = slug;
     renderFicha(slug);
     overlay.classList.add('open');
+    trackEvent('view_ficha', { departamento: slug, category: categorySelect.value });
   }
 
   function closeFicha(){
@@ -6983,6 +7073,28 @@
     document.getElementById('cmp-scale-max-'+col).textContent = cat.valueFormat(result.max, code);
   }
 
+  const cmpTooltips = { A: document.getElementById('cmp-tooltip-A'), B: document.getElementById('cmp-tooltip-B') };
+
+  function formatCompareValue(col, slug){
+    const cat = DATASETS[document.getElementById('cmp-category-'+col).value];
+    const code = document.getElementById('cmp-variable-'+col).value;
+    const year = cat.hasYears ? cat.years[+document.getElementById('cmp-year-slider-'+col).value] : null;
+    const value = cat.getValue(slug, code, year);
+    return cat.valueFormat(value, code);
+  }
+  function showCompareTooltipAt(col, slug, clientX, clientY){
+    const tt = cmpTooltips[col];
+    const name = DEPARTAMENTOS[slug] ? DEPARTAMENTOS[slug].name : slug;
+    tt.innerHTML = '<span class="cmp-tooltip-name">'+name+'</span><span class="cmp-tooltip-val">'+formatCompareValue(col, slug)+'</span>';
+    tt.style.left = clientX + 'px';
+    tt.style.top = clientY + 'px';
+    tt.classList.add('show');
+  }
+  function hideCompareTooltips(){
+    cmpTooltips.A.classList.remove('show');
+    cmpTooltips.B.classList.remove('show');
+  }
+
   function buildCompareMaps(){
     if(compareBuilt) return;
     compareBuilt = true;
@@ -7007,8 +7119,21 @@
             if(twin) twin.classList.add('cross-hover');
           }
         });
+        el.addEventListener('mousemove', function(e){
+          const other = col === 'A' ? 'B' : 'A';
+          showCompareTooltipAt(col, slug, e.clientX, e.clientY);
+          const otherSvg = document.getElementById('cordoba-map-cmp' + other);
+          if(otherSvg){
+            const twin = otherSvg.querySelector('[data-slug="'+slug+'"]');
+            if(twin){
+              const rect = twin.getBoundingClientRect();
+              showCompareTooltipAt(other, slug, rect.left + rect.width/2, rect.top + rect.height/2);
+            }
+          }
+        });
         el.addEventListener('mouseleave', function(){
           document.querySelectorAll('.cross-hover').forEach(function(x){ x.classList.remove('cross-hover'); });
+          hideCompareTooltips();
         });
       });
 
@@ -7036,6 +7161,7 @@
   function enterCompareMode(){
     buildCompareMaps();
     document.body.classList.add('mode-compare');
+    trackEvent('enter_compare_mode', {});
   }
   function exitCompareMode(){
     document.body.classList.remove('mode-compare');
@@ -7048,6 +7174,7 @@
   });
 
   document.getElementById('compareShare').addEventListener('click', function(){
+    trackEvent('share_link', { mode: 'compare' });
     buildCompareMaps();
     const params = new URLSearchParams();
     params.set('compare','1');
@@ -7206,6 +7333,7 @@
   function enterTableMode(){
     renderDataTable();
     document.body.classList.add('mode-table');
+    trackEvent('enter_table_view', { category: categorySelect.value });
   }
   function exitTableMode(){
     document.body.classList.remove('mode-table');
@@ -7217,6 +7345,7 @@
   });
 
   document.getElementById('tableDownloadCsv').addEventListener('click', function(){
+    trackEvent('download_csv', { category: categorySelect.value });
     const cat = activeCat();
     const year = cat.hasYears ? currentYear() : null;
     const cols = cat.variables;
@@ -7249,6 +7378,7 @@
   // Compartir la vista principal (categoría + variable + año)
   // ---------------------------------------------------------------
   document.getElementById('mainShare').addEventListener('click', function(){
+    trackEvent('share_link', { mode: 'main', category: categorySelect.value });
     const cat = activeCat();
     const params = new URLSearchParams();
     params.set('cat', categorySelect.value);
@@ -7287,6 +7417,233 @@
       if(idx >= 0) yearSlider.value = idx;
     }
   })();
+
+  // ---------------------------------------------------------------
+  // Descargar la ficha como imagen (para compartir en redes)
+  // ---------------------------------------------------------------
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    const words = text.split(' ');
+    let line = '';
+    let lines = [];
+    for(let i=0;i<words.length;i++){
+      const test = line + words[i] + ' ';
+      if(ctx.measureText(test).width > maxWidth && line !== ''){
+        lines.push(line);
+        line = words[i] + ' ';
+      } else {
+        line = test;
+      }
+    }
+    lines.push(line);
+    lines.forEach(function(l,i){ ctx.fillText(l.trim(), x, y + i*lineHeight); });
+    return lines.length;
+  }
+
+  async function exportFichaAsImage(){
+    if(!openSlug) return;
+    trackEvent('download_ficha_image', { departamento: openSlug, category: categorySelect.value });
+    const btn = document.getElementById('ficha-share-img');
+    btn.classList.add('busy');
+    try{
+      await document.fonts.load('700 60px Lora');
+      await document.fonts.load('600 30px Lora');
+      await document.fonts.load('600 26px Rubik');
+      await document.fonts.load('400 26px Rubik');
+      await document.fonts.load('700 22px Rubik');
+    }catch(e){}
+
+    const cat = activeCat();
+    const year = cat.hasYears ? currentYear() : null;
+    const code = currentVar();
+    const varMeta = cat.variables.find(function(v){ return v.code === code; });
+    const varLabel = varMeta ? varMeta.label : code;
+    const dep = DEPARTAMENTOS[openSlug];
+    const value = cat.getValue(openSlug, code, year);
+    const provTotal = cat.getProvincial(code, year);
+    const share = provTotal > 0 ? (value/provTotal*100) : 0;
+
+    const W = 1080, H = 1350;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // fondo
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0, '#fdfaf5');
+    grad.addColorStop(1, '#f7f0e8');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+    const LX = 72;
+    let y = 100;
+
+    // bandera mini
+    ctx.fillStyle = '#971b2f'; ctx.fillRect(LX, 64, 26, 44);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(LX+26, 64, 26, 44);
+    ctx.fillStyle = '#6cace4'; ctx.fillRect(LX+52, 64, 26, 44);
+    ctx.fillStyle = '#8f734a'; ctx.beginPath(); ctx.arc(LX+52, 86, 8, 0, 2*Math.PI); ctx.fill();
+
+    ctx.fillStyle = '#6b5c53';
+    ctx.font = '600 24px Rubik, sans-serif';
+    ctx.fillText('Mapa interactivo de Córdoba', LX+96, 96);
+
+    // nombre departamento
+    y = 210;
+    ctx.fillStyle = '#971b2f';
+    ctx.font = '700 66px Lora, Georgia, serif';
+    ctx.fillText(dep.name, LX, y);
+
+    // subtitulo categoria/variable/año
+    y += 46;
+    ctx.fillStyle = '#7a6a63';
+    ctx.font = '400 26px Rubik, sans-serif';
+    ctx.fillText(varLabel + (cat.hasYears ? ' · ' + year : ''), LX, y);
+
+    // highlight box
+    y += 50;
+    const boxH = 190;
+    ctx.fillStyle = 'rgba(151,27,47,.08)';
+    ctx.strokeStyle = 'rgba(151,27,47,.25)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, LX, y, W-LX*2, boxH, 20);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#8a5a5a';
+    ctx.font = '600 22px Rubik, sans-serif';
+    ctx.fillText(varLabel.toUpperCase(), LX+40, y+55);
+
+    ctx.fillStyle = '#6b1420';
+    ctx.font = '700 64px Lora, Georgia, serif';
+    ctx.fillText(cat.valueFormat(value, code), LX+40, y+125);
+
+    ctx.fillStyle = '#3a2f2b';
+    ctx.font = '600 26px Rubik, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(fmtPct.format(share) + '%', W-LX-40, y+95);
+    ctx.fillStyle = '#7a6a63';
+    ctx.font = '400 20px Rubik, sans-serif';
+    ctx.fillText('del total provincial', W-LX-40, y+125);
+    ctx.textAlign = 'left';
+
+    y += boxH + 60;
+
+    // evolucion (sparkline)
+    if(cat.hasYears){
+      const series = cat.years.map(function(yy){ return { y: yy, v: cat.getValue(openSlug, code, yy) }; });
+      const first = series[0].v, last = series[series.length-1].v;
+      const growth = first > 0 ? ((last-first)/first*100) : 0;
+
+      ctx.fillStyle = '#8a7a70';
+      ctx.font = '600 22px Rubik, sans-serif';
+      ctx.fillText('EVOLUCIÓN ' + cat.years[0] + '–' + cat.years[cat.years.length-1], LX, y);
+      ctx.fillStyle = growth >= 0 ? '#4a7fb0' : '#971b2f';
+      ctx.font = '600 22px Rubik, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText((growth>=0?'+':'') + fmtPct.format(growth) + '%', W-LX, y);
+      ctx.textAlign = 'left';
+
+      y += 30;
+      const chartH = 160, chartW = W - LX*2;
+      const vals = series.map(function(p){ return p.v; });
+      const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+      const span = (max-min) || 1;
+      const step = chartW / (series.length-1);
+      const pts = series.map(function(p,i){
+        const px = LX + i*step;
+        const py = y + chartH - ((p.v-min)/span)*chartH;
+        return [px,py];
+      });
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], y+chartH);
+      pts.forEach(function(p){ ctx.lineTo(p[0], p[1]); });
+      ctx.lineTo(pts[pts.length-1][0], y+chartH);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(151,27,47,.12)';
+      ctx.fill();
+
+      ctx.beginPath();
+      pts.forEach(function(p,i){ if(i===0) ctx.moveTo(p[0],p[1]); else ctx.lineTo(p[0],p[1]); });
+      ctx.strokeStyle = '#971b2f';
+      ctx.lineWidth = 4;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      y += chartH + 70;
+    }
+
+    // composicion
+    if(cat.composition){
+      const comp = cat.composition;
+      const vals = comp.keys.map(function(k){ return cat.getValue(openSlug, k, year); });
+      const total = vals.reduce(function(a,b){ return a+b; }, 0) || 1;
+      const pcts = vals.map(function(v){ return v/total*100; });
+
+      ctx.fillStyle = '#8a7a70';
+      ctx.font = '600 22px Rubik, sans-serif';
+      ctx.fillText('COMPOSICIÓN' + (cat.hasYears ? ' ' + year : ''), LX, y);
+      y += 26;
+
+      const barW = W - LX*2, barH = 30;
+      let bx = LX;
+      ctx.save();
+      roundRect(ctx, LX, y, barW, barH, 10); ctx.clip();
+      comp.keys.forEach(function(k,i){
+        ctx.fillStyle = comp.colors[i];
+        const w = barW * pcts[i]/100;
+        ctx.fillRect(bx, y, w, barH);
+        bx += w;
+      });
+      ctx.restore();
+
+      y += barH + 40;
+      ctx.font = '400 24px Rubik, sans-serif';
+      let lx = LX;
+      comp.labels.forEach(function(lbl,i){
+        ctx.fillStyle = comp.colors[i];
+        ctx.fillRect(lx, y-20, 18, 18);
+        ctx.fillStyle = '#3a2f2b';
+        const txt = lbl + ' ' + fmtPct.format(pcts[i]) + '%';
+        ctx.fillText(txt, lx+26, y-4);
+        lx += ctx.measureText(txt).width + 70;
+      });
+    }
+
+    // footer
+    ctx.fillStyle = '#a89a8f';
+    ctx.font = '400 22px Rubik, sans-serif';
+    ctx.fillText('gsagarraga.github.io/mapa.cordoba', LX, H-64);
+    ctx.fillText('Gonzalo Sagarraga · Córdoba, Argentina', LX, H-34);
+
+    canvas.toBlob(async function(blob){
+      const filename = 'cordoba-' + openSlug + '-' + categorySelect.value + '.png';
+      const file = new File([blob], filename, {type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({files:[file], title: dep.name});
+          btn.classList.remove('busy');
+          return;
+        }catch(e){ /* usuario canceló o falló: seguimos con descarga */ }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      btn.classList.remove('busy');
+    }, 'image/png');
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+
+  document.getElementById('ficha-share-img').addEventListener('click', exportFichaAsImage);
 
   // ---------------------------------------------------------------
   // Init
