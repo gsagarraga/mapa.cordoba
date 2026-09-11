@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Boleta Única de Sufragio · Córdoba</title>
+<meta name="description" content="Practicá cómo se vota con Boleta Única de Sufragio (BUS) en Córdoba: marcá lista completa o elegí categoría por categoría, y mirá en vivo cómo queda tu voto.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Lora:ital,wght@0,500;0,600;0,700;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wine:#971b2f;
+    --wine-dark:#6b1420;
+    --wine-pale:#f6e2e2;
+    --blue:#6cace4;
+    --blue-dark:#4a7fb0;
+    --gold:#8f734a;
+    --gold-dark:#6b5636;
+    --gold-pale:#f1e9db;
+
+    --bg:#faf6f1;
+    --panel:#fffdfa;
+    --ink:#2b201f;
+    --ink-soft:#7a6a63;
+    --border:#ecdfd8;
+    --shadow: 0 20px 50px -20px rgba(90,30,30,0.28);
+
+    /* colores calcados a pixel de la boleta real (BUS Córdoba) */
+    --bus-magenta:#e31c79;
+    --bus-black:#141414;
+    --bus-graycell:#e9e9e9;
+    --bus-green:#5da164;
+    --bus-border:#c9c9c9;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #fff8ea 0%, transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, #f6ecd8 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Rubik","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,sans-serif;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  a{ color:var(--wine-dark); }
+
+  header{ max-width:1180px; width:100%; margin:0 auto; padding:.9rem 1.5rem .5rem; flex:0 0 auto; }
+  .back-link{ display:inline-flex; align-items:center; gap:.35rem; font-size:.78rem; color:var(--ink-soft); text-decoration:none; margin-bottom:.5rem; }
+  .back-link:hover{ color:var(--wine-dark); }
+  .back-link svg{ width:14px; height:14px; }
+  .header-flag{ display:flex; align-items:center; gap:.7rem; margin-bottom:.3rem; }
+  .header-flag svg{ height:30px; width:auto; border-radius:4px; box-shadow:0 4px 14px -4px rgba(90,20,25,.45), 0 0 0 1px rgba(0,0,0,.06); }
+  h1{ font-family:"Lora","Georgia",serif; font-size:clamp(1.15rem,2.2vw,1.5rem); margin:0; color:var(--ink); }
+  h1 span{ color:var(--wine); }
+  header p.tiny-disclaimer{ margin:.25rem 0 0; font-size:.68rem; color:var(--ink-soft); max-width:900px; line-height:1.35; }
+
+  main{ max-width:1180px; width:100%; margin:0 auto; padding:0 1.5rem .5rem; display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
+
+  .info-strip{
+    flex:0 0 auto;
+    display:flex; gap:1.4rem; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:.4rem .9rem; margin-bottom:.6rem;
+    font-size:.7rem; color:var(--ink-soft); line-height:1.4;
+  }
+  .info-strip b{ color:var(--ink); }
+
+  /* ============== la boleta, calcada del diseño real ============== */
+  .ballot-wrap{ flex:1 1 700px; min-width:0; min-height:0; display:flex; }
+  .ballot-sheet{ background:#fff; border:1px solid #b8b8b8; box-shadow:var(--shadow); overflow-x:hidden; overflow-y:auto; position:relative; flex:1 1 auto; min-height:0; }
+  .ballot-scroll{ position:relative; width:100%; }
+
+  .ballot-topbar{ display:flex; align-items:center; gap:1rem; padding:.8rem 1rem; border-bottom:3px solid var(--ink); }
+  .ballot-topbar .crest{ flex:0 0 auto; width:44px; height:44px; border-radius:50%; background:var(--wine); display:flex; align-items:center; justify-content:center; color:#fdf8ee; }
+  .ballot-topbar .crest svg{ width:24px; height:24px; }
+  .ballot-topbar .titles{ flex:1 1 auto; }
+  .ballot-topbar .titles h2{ margin:0; font-family:"Rubik",sans-serif; font-weight:700; font-size:1.05rem; color:var(--ink); }
+  .ballot-topbar .titles small{ font-size:.72rem; color:var(--ink-soft); letter-spacing:.02em; }
+  .ballot-meta{ flex:0 0 auto; display:flex; gap:.4rem; font-size:.62rem; text-align:center; }
+  .ballot-meta .box{ border:1px solid var(--ink); padding:.25rem .5rem; min-width:64px; }
+  .ballot-meta .box b{ display:block; font-size:.72rem; }
+  .ballot-barcode{ flex:0 0 auto; width:90px; height:32px; background:repeating-linear-gradient(90deg,#111 0 2px,transparent 2px 4px,#111 4px 5px,transparent 5px 8px); }
+
+  .level-cell{ text-align:center; font-size:.72rem; font-weight:700; letter-spacing:.08em; color:#555; padding:.3rem; background:#eee; border:1px solid #ddd; border-top:none; }
+
+  table.bus{ border-collapse:collapse; width:100%; table-layout:fixed; }
+  /* los anchos de columna se asignan por JS en % (ver buildColgroup) para que la boleta entre sin scroll horizontal */
+
+  table.bus thead th{ padding:0; border:1px solid #ddd; border-top:none; background:#fff; }
+  table.bus thead th.gap-head{ background:var(--bg); border:none; }
+  .col-head{ display:flex; align-items:center; justify-content:center; gap:.35rem; color:var(--bus-magenta); font-weight:700; font-size:.66rem; text-align:center; padding:.5rem .3rem; line-height:1.25; min-height:2.6em; text-transform:uppercase; }
+  .col-head svg{ width:13px; height:13px; flex:0 0 auto; }
+
+  table.bus tbody td{ border-right:1px solid var(--bus-border); border-left:1px solid var(--bus-border); vertical-align:middle; padding:0; height:78px; }
+  table.bus tbody td.gap-cell{ background:var(--bg); border:none; }
+  table.bus tbody tr{ border-bottom:6px solid var(--bus-green); }
+  table.bus tbody td.cat-cell, table.bus tbody td.cat-cell.empty{ background:var(--bus-graycell); }
+  table.bus tbody td.lc-cell{ background:var(--bus-black); }
+
+  .lc-cell{ padding:.4rem .6rem !important; height:78px; overflow:hidden; }
+  .party-row{ display:flex; align-items:center; gap:.5rem; }
+  .party-idnum{ flex:0 0 auto; text-align:center; }
+  .party-idnum .lista-lbl{ color:#bbb; font-size:.56rem; text-transform:uppercase; display:block; }
+  .party-idnum .num{ color:#fff; font-weight:700; font-size:.8rem; display:block; }
+  .party-logo{ flex:0 0 auto; width:26px; height:26px; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.6rem; }
+  .party-name{ flex:1 1 auto; font-size:.72rem; font-weight:700; color:#fff; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lc-photorow{ display:flex; align-items:center; gap:.4rem; margin-top:.25rem; }
+
+  .avatar{ flex:0 0 auto; width:34px; height:34px; border-radius:3px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.66rem; letter-spacing:.02em; }
+
+  .checkbox-btn{ flex:0 0 auto; width:26px; height:26px; border:1.6px solid #999; background:#fff; border-radius:2px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; margin-left:auto; }
+  .checkbox-btn svg{ width:16px; height:16px; opacity:0; transform:scale(.5); transition:opacity .12s ease, transform .12s ease; stroke:#fff; }
+  .checkbox-btn:hover{ border-color:var(--wine); }
+
+  .cell-inner{ padding:.4rem .55rem; display:flex; align-items:center; gap:.5rem; height:78px; overflow:hidden; }
+  .cell-empty{ padding:.4rem .4rem; color:#999; font-size:.64rem; text-align:center; display:flex; align-items:center; justify-content:center; height:78px; }
+
+  .cand-text{ flex:1 1 auto; min-width:0; font-size:.63rem; line-height:1.32; color:var(--ink); overflow:hidden; }
+  .cand-text b{ font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cand-text .role{ display:block; color:#555; font-size:.56rem; text-transform:uppercase; letter-spacing:.02em; font-weight:600; margin-top:.22rem; }
+  .cand-text .role:first-child{ margin-top:0; }
+  .cand-text .note-line{ display:block; color:#8a7a70; font-size:.56rem; font-style:italic; margin-top:.15rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* estados marcado / anulado */
+  .lc-cell.marked{ box-shadow:inset 0 0 0 3px var(--gold); }
+  .lc-cell.marked .checkbox-btn{ background:var(--gold); border-color:var(--gold-dark); }
+  .lc-cell.marked .checkbox-btn svg{ opacity:1; transform:scale(1); }
+
+  td.cat-cell.marked{ box-shadow:inset 0 0 0 3px var(--wine); }
+  td.cat-cell.marked .checkbox-btn{ background:var(--wine); border-color:var(--wine-dark); }
+  td.cat-cell.marked .checkbox-btn svg{ opacity:1; transform:scale(1); }
+
+  td.overridden{ opacity:.55; }
+  td.overridden .cand-text{ text-decoration:line-through; text-decoration-color:#999; }
+
+  .watermark{ position:absolute; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center; overflow:hidden; opacity:.08; z-index:2; }
+  .watermark span{ display:block; white-space:nowrap; font-family:"Rubik",sans-serif; font-weight:700; font-size:2.6rem; color:#000; transform:rotate(-18deg); letter-spacing:.05em; }
+
+  /* ---- barra de resultado (abajo) ---- */
+  .vote-bar{ flex:0 0 auto; background:linear-gradient(135deg, var(--wine-dark), var(--wine) 60%, var(--gold-dark)); color:#fff; padding:.55rem 1.5rem .6rem; box-shadow:0 -8px 24px -12px rgba(0,0,0,.35); }
+  .vote-bar-head{ max-width:1180px; margin:0 auto; display:flex; align-items:center; gap:.9rem; margin-bottom:.4rem; }
+  .vote-bar-title{ font-family:"Lora",Georgia,serif; font-size:1rem; font-weight:600; flex:0 0 auto; }
+  .lc-banner{ background:rgba(255,255,255,.2); padding:.25rem .7rem; border-radius:999px; font-size:.7rem; font-weight:600; }
+  .status-banner{ display:flex; align-items:center; gap:.35rem; padding:.25rem .75rem; border-radius:999px; font-size:.72rem; font-weight:700; }
+  .status-banner svg{ width:14px; height:14px; flex:0 0 auto; }
+  .status-banner.status-red{ background:#c0392b; }
+  .status-banner.status-green{ background:#2f8f52; }
+  .status-banner.status-neutral{ background:rgba(255,255,255,.15); font-weight:500; opacity:.85; }
+  .vote-chip.conflict{ background:rgba(192,57,43,.55) !important; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6); }
+  .vote-chip.ok{ background:rgba(47,143,82,.32); }
+  .law-note{ max-width:1180px; margin:.35rem auto 0; font-size:.62rem; color:rgba(255,255,255,.75); text-align:center; }
+  .law-note a{ color:#fff; text-decoration:underline; }
+  button.reset-btn{ margin-left:auto; font:inherit; font-size:.72rem; font-weight:600; padding:.35rem .85rem; border-radius:999px; border:1px solid rgba(255,255,255,.45); background:rgba(255,255,255,.08); color:#fff; cursor:pointer; flex:0 0 auto; }
+  button.reset-btn:hover{ background:rgba(255,255,255,.22); }
+
+  .vote-bar-items{ max-width:1180px; margin:0 auto; display:flex; gap:.5rem; overflow-x:auto; padding-bottom:.1rem; }
+  .vote-chip{ flex:1 1 0; min-width:118px; background:rgba(255,255,255,.1); border-radius:9px; padding:.35rem .6rem; }
+  .vote-chip .cat-label{ font-size:.58rem; text-transform:uppercase; letter-spacing:.03em; opacity:.8; margin-bottom:.1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .vote-chip .cat-value{ font-size:.78rem; font-weight:700; display:flex; align-items:center; gap:.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .vote-chip .cat-value.blank{ opacity:.65; font-weight:400; font-style:italic; }
+  .vote-chip .warn-icon{ flex:0 0 auto; width:13px; height:13px; }
+  .vote-gap{ flex:0 0 1px; background:rgba(255,255,255,.3); margin:.3rem .1rem; }
+
+  @media (max-width:760px){
+    html,body{ height:auto; }
+    body{ overflow:visible; }
+    .vote-bar-head{ flex-wrap:wrap; }
+    button.reset-btn{ margin-left:0; }
+  }
+  @media (max-width:640px){
+    .avatar{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    Volver al mapa interactivo
+  </a>
+  <div class="header-flag">
+    <svg viewBox="0 0 90 60" xmlns="http://www.w3.org/2000/svg">
+      <rect width="90" height="60" fill="#fff"/><rect width="31" height="60" fill="#971b2f"/><rect x="59" width="31" height="60" fill="#6cace4"/>
+      <circle cx="45" cy="30" r="8" fill="#8f734a"/><circle cx="45" cy="30" r="4" fill="#fdf8ee"/>
+    </svg>
+    <h1>Simulador de <span>Boleta Única de Sufragio</span></h1>
+  </div>
+  <p class="tiny-disclaimer">Partidos y candidatos <strong>de ejemplo</strong> — no representan a ninguna fuerza política real. Los avatares son iniciales, no fotos.</p>
+</header>
+
+<main>
+  <div class="info-strip">
+    <span><b>Lista completa:</b> vota un mismo partido en todo, de una vez.</span>
+    <span><b>Voto cruzado:</b> sin marcarla, elegís partido distinto por categoría.</span>
+    <span><b>Ojo:</b> si marcás lista completa, anula cualquier marca individual distinta.</span>
+  </div>
+
+  <div class="ballot-wrap">
+    <div class="ballot-sheet">
+      <div class="watermark"><span>SIMULADOR&nbsp;&nbsp;·&nbsp;&nbsp;EJERCICIO DE PRÁCTICA&nbsp;&nbsp;·&nbsp;&nbsp;SIMULADOR&nbsp;&nbsp;·&nbsp;&nbsp;EJERCICIO DE PRÁCTICA</span></div>
+      <div class="ballot-scroll">
+        <div class="ballot-topbar">
+          <div class="crest">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg>
+          </div>
+          <div class="titles">
+            <h2>Elecciones Generales de la Provincia de Córdoba</h2>
+            <small>SIMULADOR · Provincial + Municipal</small>
+          </div>
+          <div class="ballot-meta">
+            <div class="box">Sección<b>01</b></div>
+            <div class="box">Circuito<b>0000</b></div>
+            <div class="box">Mesa<b>—</b></div>
+          </div>
+          <div class="ballot-barcode"></div>
+        </div>
+        <table class="bus" id="ballotTable">
+          <colgroup id="ballotColgroup"></colgroup>
+          <thead>
+            <tr id="levelRow"></tr>
+            <tr id="ballotHead"></tr>
+          </thead>
+          <tbody id="ballotBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="vote-bar">
+  <div class="vote-bar-head">
+    <span class="vote-bar-title">Tu voto quedaría así</span>
+    <div class="status-banner" id="statusBanner"></div>
+    <div class="lc-banner" id="lcBanner" style="display:none;"></div>
+    <button class="reset-btn" id="resetBtn" type="button">Borrar y empezar de nuevo</button>
+  </div>
+  <div class="vote-bar-items" id="summaryList"></div>
+  <p class="law-note">Mecánica basada en el Código Electoral Provincial de Córdoba —
+    <a href="https://www.justiciacordoba.gob.ar/Estatico/JEL/Contenido/Legislacion/files/Electoral/L.9571.pdf" target="_blank" rel="noopener">Ley N° 9.571</a>,
+    arts. 53, 54 y 122 (incs. 1 y 2), modificada por Leyes 9.838 y 10.272.</p>
+</div>
+
+<script>
+(function(){
+  const CATEGORIES = [
+    { code:'gob', label:'Gobernador y Vice', photo:true, level:'prov' },
+    { code:'legdist', label:'Legislador Distrito Único', photo:false, level:'prov' },
+    { code:'legdep', label:'Legislador Departamental', photo:true, level:'prov' },
+    { code:'tribunal', label:'Tribunal de Cuentas Provincial', photo:false, level:'prov' },
+    { code:'intendente', label:'Intendente y Concejales', photo:true, level:'muni' },
+    { code:'tribmun', label:'Tribunal de Cuentas Municipal', photo:false, level:'muni' }
+  ];
+  const LEVELS = [
+    { code:'prov', label:'Nivel Provincial' },
+    { code:'muni', label:'Nivel Municipal' }
+  ];
+
+  function initials(name){
+    return name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+  }
+
+  const PARTIES = [
+    { code:'p1', num:'P242', name:'Unidad Vecinal', color:'#971b2f', c:{
+      gob:{tit:'Marcos Ibáñez', sup:'Lucía Paredes'}, legdist:{tit:'Lista 101'}, legdep:{tit:'Diego Solá', sup:'Ana Bracamonte'}, tribunal:{tit:'Rocío Ferrer', sup:'Iván Correa'},
+      intendente:{tit:'Andrés Molina', note:'+ Concejales'}, tribmun:{tit:'Karina Suárez', sup:'Leonel Paz'} } },
+    { code:'p2', num:'A101', name:'Frente Renovador', color:'#4a7fb0', c:{
+      gob:{tit:'Carla Núñez', sup:'Rubén Acosta'}, legdist:{tit:'Lista 202'}, legdep:{tit:'Elena Vargas', sup:'Tomás Bianchi'}, tribunal:{tit:'Federico Ortiz', sup:'Malena Ríos'},
+      intendente:{tit:'Silvina Roldán', note:'+ Concejales'}, tribmun:{tit:'Braian Cuello', sup:'Ornella Sosa'} } },
+    { code:'p3', num:'P22', name:'Encuentro Ciudadano', color:'#6b5636', c:{
+      gob:{tit:'Pablo Ferreyra', sup:'Nadia Quiroga'}, legdist:{tit:'Lista 303'}, legdep:null, tribunal:{tit:'Hugo Medina', sup:'Rosa Funes'},
+      intendente:null, tribmun:{tit:'Walter Gómez', sup:'Celeste Ibarra'} } },
+    { code:'p4', num:'A304', name:'Convergencia Social', color:'#6cace4', c:{
+      gob:{tit:'Valeria Torres', sup:'Ignacio Bazán'}, legdist:{tit:'Lista 404'}, legdep:{tit:'Sofía Aguirre', sup:'Pedro Lucero'}, tribunal:{tit:'Camila Ponce', sup:'Ezequiel Vega'},
+      intendente:{tit:'Joaquín Bustos', note:'+ Concejales'}, tribmun:{tit:'Daniela Coria', sup:'Maximiliano Ríos'} } },
+    { code:'p5', num:'A203', name:'Movimiento Federal', color:'#c65a68', c:{
+      gob:{tit:'Ramiro Cáceres', sup:'Agustina Luna'}, legdist:{tit:'Lista 505'}, legdep:{tit:'Martín Ojeda', sup:'Yamila Soria'}, tribunal:null,
+      intendente:{tit:'Betiana Rossi', note:'+ Concejales'}, tribmun:null } },
+    { code:'p6', num:'A701', name:'Nueva Alternativa', color:'#3aa650', c:{
+      gob:{tit:'Julieta Rossi', sup:'Emanuel Díaz'}, legdist:{tit:'Lista 606'}, legdep:{tit:'Bianca Herrera', sup:'Nicolás Peralta'}, tribunal:{tit:'Lorena Assad', sup:'Gastón Nieva'},
+      intendente:{tit:'Rodrigo Espeche', note:'+ Concejales'}, tribmun:{tit:'Yésica Toledo', sup:'Franco Almada'} } }
+  ];
+
+  const state = { listaCompleta:null, cats:{} };
+  CATEGORIES.forEach(function(c){ state.cats[c.code] = null; });
+
+  const head = document.getElementById('ballotHead');
+  const body = document.getElementById('ballotBody');
+  const summaryList = document.getElementById('summaryList');
+  const lcBanner = document.getElementById('lcBanner');
+  const statusBanner = document.getElementById('statusBanner');
+
+  const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"/></svg>';
+  const arrowSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17L17 7"/></svg>';
+
+  function buildColgroup(){
+    // anchos en % para que la tabla siempre ocupe el 100% del contenedor
+    // (sin scroll horizontal), sea cual sea el ancho de pantalla.
+    const GAP_PCT = 1.2;
+    const LC_PCT = 15;
+    const catCount = CATEGORIES.length;
+    const catPct = (100 - LC_PCT - GAP_PCT) / catCount;
+
+    let html = '<col style="width:'+LC_PCT+'%">';
+    let prevLevel = CATEGORIES[0].level;
+    CATEGORIES.forEach(function(cat){
+      if(cat.level !== prevLevel){ html += '<col style="width:'+GAP_PCT+'%">'; prevLevel = cat.level; }
+      html += '<col style="width:'+catPct+'%">';
+    });
+    document.getElementById('ballotColgroup').innerHTML = html;
+  }
+
+  function buildLevelRow(){
+    const levelRow = document.getElementById('levelRow');
+    let html = '';
+    LEVELS.forEach(function(lvl, i){
+      const count = CATEGORIES.filter(function(c){ return c.level === lvl.code; }).length;
+      const span = count + (lvl.code === LEVELS[0].code ? 1 : 0); // el primer nivel suma la columna de lista completa
+      if(i > 0) html += '<th class="gap-head"></th>';
+      html += '<th class="level-cell" colspan="'+span+'">'+lvl.label+'</th>';
+    });
+    levelRow.innerHTML = html;
+  }
+
+  function buildHead(){
+    let html = '<th><div class="col-head">'+arrowSvg+' Voto Lista Completa</div></th>';
+    let prevLevel = CATEGORIES[0].level;
+    CATEGORIES.forEach(function(cat){
+      if(cat.level !== prevLevel){ html += '<th class="gap-head"></th>'; prevLevel = cat.level; }
+      html += '<th><div class="col-head">'+arrowSvg+' '+cat.label+'</div></th>';
+    });
+    head.innerHTML = html;
+  }
+
+  function buildBody(){
+    body.innerHTML = PARTIES.map(function(party){
+      let row = '<tr>';
+      row += '<td class="lc-cell" data-kind="lc" data-party="'+party.code+'">'+
+        '<div class="party-row">'+
+          '<div class="party-idnum"><span class="lista-lbl">Lista</span><span class="num">'+party.num+'</span></div>'+
+          '<div class="party-logo" style="background:'+party.color+'">'+initials(party.name)+'</div>'+
+          '<div class="party-name">'+party.name+'</div>'+
+        '</div>'+
+        '<div class="lc-photorow">'+
+          '<span class="avatar" style="background:'+party.color+'">'+initials(party.c.gob ? party.c.gob.tit : party.name)+'</span>'+
+          '<button type="button" class="checkbox-btn" data-kind="lc" data-party="'+party.code+'">'+checkSvg+'</button>'+
+        '</div>'+
+        '</td>';
+      let prevLevel = CATEGORIES[0].level;
+      CATEGORIES.forEach(function(cat){
+        if(cat.level !== prevLevel){ row += '<td class="gap-cell"></td>'; prevLevel = cat.level; }
+        const info = party.c[cat.code];
+        if(!info){
+          row += '<td class="cat-cell empty" data-cat="'+cat.code+'" data-party="'+party.code+'"><div class="cell-empty">Sin candidatos<br>en esta categoría</div></td>';
+        } else {
+          const supLine = info.sup ? '<span class="role">Suplente</span>'+info.sup : '';
+          const noteLine = info.note ? '<span class="note-line">'+info.note+'</span>' : '';
+          const avatarHtml = cat.photo ? '<span class="avatar" style="background:'+party.color+'">'+initials(info.tit)+'</span>' : '';
+          row += '<td class="cat-cell" data-cat="'+cat.code+'" data-party="'+party.code+'">'+
+            '<div class="cell-inner">'+
+            '<div class="cand-text"><span class="role">Titular</span><b>'+info.tit+'</b>'+supLine+noteLine+'</div>'+
+            avatarHtml+
+            '<button type="button" class="checkbox-btn" data-kind="cat" data-cat="'+cat.code+'" data-party="'+party.code+'">'+checkSvg+'</button>'+
+            '</div></td>';
+        }
+      });
+      row += '</tr>';
+      return row;
+    }).join('');
+  }
+
+  function effectiveVote(catCode){
+    if(state.listaCompleta) return state.listaCompleta;
+    return state.cats[catCode];
+  }
+  // "en conflicto": hay lista completa marcada Y además una marca individual
+  // en ese tramo (sea del mismo partido o de otro) — mezclar las dos formas
+  // de votar es lo que hay que evitar, más allá de si coinciden o no.
+  function isOverridden(catCode){
+    return !!(state.listaCompleta && state.cats[catCode]);
+  }
+
+  function render(){
+    body.querySelectorAll('td.lc-cell').forEach(function(td){
+      const marked = state.listaCompleta === td.getAttribute('data-party');
+      td.classList.toggle('marked', marked);
+    });
+    CATEGORIES.forEach(function(cat){
+      body.querySelectorAll('td.cat-cell[data-cat="'+cat.code+'"]').forEach(function(td){
+        const partyCode = td.getAttribute('data-party');
+        const marked = state.cats[cat.code] === partyCode;
+        td.classList.toggle('marked', marked);
+        td.classList.toggle('overridden', marked && isOverridden(cat.code));
+      });
+    });
+
+    let prevLevel = null;
+    summaryList.innerHTML = CATEGORIES.map(function(cat){
+      let gap = '';
+      if(cat.level !== prevLevel){
+        if(prevLevel !== null) gap = '<div class="vote-gap" title="'+LEVELS.find(function(l){return l.code===cat.level;}).label+'"></div>';
+        prevLevel = cat.level;
+      }
+      const winner = effectiveVote(cat.code);
+      const conflict = isOverridden(cat.code) && !!state.cats[cat.code];
+      let valueHtml;
+      if(winner){
+        const party = PARTIES.find(function(p){ return p.code === winner; });
+        valueHtml = party.name;
+      } else {
+        valueHtml = '<span class="blank">Voto en blanco</span>';
+      }
+      const warnIcon = conflict ? '<svg class="warn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>' : '';
+      const titleAttr = conflict ? ' title="Marcaste Lista completa y además esta categoría por separado — no deberías combinar las dos formas de votar."' : '';
+      const chipClass = conflict ? ' conflict' : (winner ? ' ok' : '');
+      return gap + '<div class="vote-chip'+chipClass+'"'+titleAttr+'><div class="cat-label">'+cat.label+'</div><div class="cat-value'+(winner?'':' blank')+'">'+valueHtml+warnIcon+'</div></div>';
+    }).join('');
+
+    if(state.listaCompleta){
+      const party = PARTIES.find(function(p){ return p.code === state.listaCompleta; });
+      lcBanner.style.display = 'block';
+      lcBanner.textContent = 'Votando lista completa: ' + party.name;
+    } else {
+      lcBanner.style.display = 'none';
+    }
+
+    // estado general: rojo si hay marcas que se pisan (mal uso), verde si no
+    const anyConflict = CATEGORIES.some(function(cat){ return isOverridden(cat.code) && !!state.cats[cat.code]; });
+    const anyVote = !!state.listaCompleta || CATEGORIES.some(function(cat){ return !!state.cats[cat.code]; });
+    const okIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M4 12l6 6L20 6"/></svg>';
+    const badIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>';
+    if(anyConflict){
+      statusBanner.className = 'status-banner status-red';
+      statusBanner.innerHTML = badIcon + '<span>Hay marcas que se pisan entre sí</span>';
+    } else if(anyVote){
+      statusBanner.className = 'status-banner status-green';
+      statusBanner.innerHTML = okIcon + '<span>Sin contradicciones</span>';
+    } else {
+      statusBanner.className = 'status-banner status-neutral';
+      statusBanner.innerHTML = '<span>Todavía no marcaste nada</span>';
+    }
+  }
+
+  body.addEventListener('click', function(e){
+    const target = e.target.closest('.checkbox-btn, td.lc-cell');
+    if(!target) return;
+    const kind = target.getAttribute('data-kind');
+    if(!kind) return;
+    const partyCode = target.getAttribute('data-party');
+    if(kind === 'lc'){
+      state.listaCompleta = (state.listaCompleta === partyCode) ? null : partyCode;
+    } else {
+      const catCode = target.getAttribute('data-cat');
+      state.cats[catCode] = (state.cats[catCode] === partyCode) ? null : partyCode;
+    }
+    render();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    state.listaCompleta = null;
+    CATEGORIES.forEach(function(c){ state.cats[c.code] = null; });
+    render();
+  });
+
+  buildColgroup();
+  buildLevelRow();
+  buildHead();
+  buildBody();
+  render();
+})();
+</script>
+</body>
+</html>
