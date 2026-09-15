@@ -6615,7 +6615,7 @@
 
 <script>
 (function(){
-  function initApp(PBR, CENSO, MATRICULA, SALUD, VITALES, EMPLEO){
+  function initApp(PBR, CENSO, MATRICULA, SALUD, VITALES, EMPLEO, SOCIODEMO, MERCADOLABORAL, CONDVIDA, EDUCACION2022, SALUD2022, PBR2022){
   // ---------------------------------------------------------------
   // 0) Datos ya cargados (ver loadDataAndInit más abajo) y registro
   //    de nombres/slugs a partir de los departamentos del mapa
@@ -6757,6 +6757,103 @@
         return (EMPLEO.provincial[year] && EMPLEO.provincial[year][code]) || 0;
       },
       composition: null
+    },
+    sociodemo: {
+      label: 'Perfil Sociodemográfico',
+      desc: 'Densidad, estructura de edad y vivienda. Fuente: Dirección General de Estadística y Censos de Córdoba, 2022.',
+      hasYears: false,
+      mainCode: 'DENSIDAD',
+      variables: SOCIODEMO.variables,
+      valueFormat: function(v, code){
+        if(code === 'DENSIDAD') return fmt.format(v) + ' hab/km²';
+        if(code === 'SUPERFICIE') return fmt.format(v) + ' km²';
+        if(code && code.indexOf('PCT_') === 0) return fmtPct.format(v) + '%';
+        if(code === 'VAR_INTERCENSAL') return (v>=0?'+':'') + fmtPct.format(v) + '%';
+        if(code === 'POB_2022' || code === 'HOGARES_2022') return fmt.format(v);
+        return fmtPct.format(v);
+      },
+      getValue: function(slug, code){
+        const d = SOCIODEMO.departments[slug];
+        return d ? (d.values[code] || 0) : 0;
+      },
+      getProvincial: function(code){ return SOCIODEMO.provincial[code] || 0; },
+      composition: { keys:['PCT_VARONES','PCT_MUJERES'], labels:['Varones','Mujeres'], colors:['#6cace4','#971b2f'] }
+    },
+    mercadolaboral: {
+      label: 'Mercado Laboral',
+      desc: 'Condición de actividad de la población (PEA). Fuente: Dirección General de Estadística y Censos de Córdoba, 2022.',
+      hasYears: false,
+      mainCode: 'TASA_DESOCUPACION',
+      variables: MERCADOLABORAL.variables,
+      valueFormat: function(v){ return fmtPct.format(v) + '%'; },
+      getValue: function(slug, code){
+        const d = MERCADOLABORAL.departments[slug];
+        return d ? (d.values[code] || 0) : 0;
+      },
+      getProvincial: function(code){ return MERCADOLABORAL.provincial[code] || 0; },
+      composition: { keys:['OCUP_VARONES_PCT','OCUP_MUJERES_PCT'], labels:['Ocupados varones','Ocupadas mujeres'], colors:['#6cace4','#971b2f'] }
+    },
+    condvida: {
+      label: 'Condiciones de Vida (NBI)',
+      desc: 'Necesidades Básicas Insatisfechas y acceso a servicios. Fuente: Dirección General de Estadística y Censos de Córdoba, 2022.',
+      hasYears: false,
+      mainCode: 'NBI_TOTAL',
+      variables: CONDVIDA.variables,
+      valueFormat: function(v){ return fmtPct.format(v) + '%'; },
+      getValue: function(slug, code){
+        const d = CONDVIDA.departments[slug];
+        return d ? (d.values[code] || 0) : 0;
+      },
+      getProvincial: function(code){ return CONDVIDA.provincial[code] || 0; },
+      composition: null
+    },
+    educacion2022: {
+      label: 'Educación (indicadores 2022)',
+      desc: 'Nivel educativo alcanzado y tasas de escolarización. Complementa la matrícula con indicadores de resultado. Fuente: DGEyC Córdoba, 2022.',
+      hasYears: false,
+      mainCode: 'SEC_COMPLETO',
+      variables: EDUCACION2022.variables,
+      valueFormat: function(v){ return fmtPct.format(v) + '%'; },
+      getValue: function(slug, code){
+        const d = EDUCACION2022.departments[slug];
+        return d ? (d.values[code] || 0) : 0;
+      },
+      getProvincial: function(code){ return EDUCACION2022.provincial[code] || 0; },
+      composition: null
+    },
+    salud2022: {
+      label: 'Salud (indicadores 2022)',
+      desc: 'Cobertura de salud por edad y hechos vitales. Actualiza con datos 2022 la categoría de Cobertura de Salud (2008). Fuente: DGEyC Córdoba.',
+      hasYears: false,
+      mainCode: 'COBERTURA_TOTAL',
+      variables: SALUD2022.variables,
+      valueFormat: function(v, code){
+        if(code && code.indexOf('COBERTURA_') === 0) return fmtPct.format(v) + '%';
+        return fmtPct.format(v);
+      },
+      getValue: function(slug, code){
+        const d = SALUD2022.departments[slug];
+        return d ? (d.values[code] || 0) : 0;
+      },
+      getProvincial: function(code){ return SALUD2022.provincial[code] || 0; },
+      composition: null
+    },
+    pbr2022: {
+      label: 'Producto Bruto Regional (indicadores 2022)',
+      desc: 'PBR per cápita y participación sectorial. Complementa la serie histórica de Producto Bruto Regional. Fuente: DGEyC Córdoba, 2022.',
+      hasYears: false,
+      mainCode: 'PBR_PERCAPITA',
+      variables: PBR2022.variables,
+      valueFormat: function(v, code){
+        if(code === 'PBR_PERCAPITA') return '$ ' + fmt.format(v);
+        return (v>=0&&code.indexOf('VAR_')===0?'+':'') + fmtPct.format(v) + '%';
+      },
+      getValue: function(slug, code){
+        const d = PBR2022.departments[slug];
+        return d ? (d.values[code] || 0) : 0;
+      },
+      getProvincial: function(code){ return PBR2022.provincial[code] || 0; },
+      composition: { keys:['BIENES_CONST_PCT','SERVICIOS_CONST_PCT'], labels:['Bienes','Servicios'], colors:['#971b2f','#6cace4'] }
     }
   };
 
@@ -7732,9 +7829,15 @@
     fetchJSON('data/matricula.json'),
     fetchJSON('data/salud.json'),
     fetchJSON('data/vitales.json'),
-    fetchJSON('data/empleo.json')
+    fetchJSON('data/empleo.json'),
+    fetchJSON('data/sociodemo.json'),
+    fetchJSON('data/mercadolaboral.json'),
+    fetchJSON('data/condvida.json'),
+    fetchJSON('data/educacion2022.json'),
+    fetchJSON('data/salud2022.json'),
+    fetchJSON('data/pbr2022.json')
   ]).then(function(results){
-    initApp(results[0], results[1], results[2], results[3], results[4], results[5]);
+    initApp(results[0], results[1], results[2], results[3], results[4], results[5], results[6], results[7], results[8], results[9], results[10], results[11]);
   }).catch(function(err){
     console.error('Error cargando datos del mapa interactivo:', err);
     showLoadError((err && err.message ? err.message : 'No se pudieron cargar los datos.') + ' — Recargá la página o revisá tu conexión.');

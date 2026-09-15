@@ -157,6 +157,19 @@
   .law-note{ max-width:1180px; margin:.35rem auto 0; font-size:.62rem; color:rgba(255,255,255,.75); text-align:center; }
   .law-note a{ color:#fff; text-decoration:underline; }
   button.reset-btn{ margin-left:auto; font:inherit; font-size:.72rem; font-weight:600; padding:.35rem .85rem; border-radius:999px; border:1px solid rgba(255,255,255,.45); background:rgba(255,255,255,.08); color:#fff; cursor:pointer; flex:0 0 auto; }
+  .ghost-btn{ display:flex; align-items:center; gap:.35rem; font:inherit; font-size:.7rem; font-weight:500; padding:.32rem .7rem; border-radius:999px; border:1px solid rgba(255,255,255,.35); background:transparent; color:rgba(255,255,255,.9); cursor:pointer; flex:0 0 auto; white-space:nowrap; }
+  .ghost-btn:hover{ background:rgba(255,255,255,.12); }
+  .ghost-btn svg{ width:13px; height:13px; }
+
+  .modal-overlay{ position:fixed; inset:0; z-index:100; background:rgba(30,20,18,.5); display:flex; align-items:center; justify-content:center; padding:1.2rem; opacity:0; pointer-events:none; transition:opacity .15s ease; }
+  .modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .modal-card{ position:relative; max-width:520px; width:100%; max-height:82vh; overflow-y:auto; background:var(--panel); border-radius:16px; padding:1.6rem 1.7rem; box-shadow:0 30px 70px -25px rgba(40,28,12,.5); }
+  .modal-card h3{ font-family:"Lora",Georgia,serif; font-size:1.2rem; margin:0 0 .8rem; color:var(--wine-dark); }
+  .modal-card p{ font-size:.85rem; line-height:1.55; color:var(--ink); margin:0 0 .8rem; }
+  .modal-card p:last-child{ margin-bottom:0; }
+  .modal-card .modal-note{ font-size:.78rem; color:var(--ink-soft); background:var(--gold-pale); border-radius:10px; padding:.7rem .9rem; }
+  .modal-close{ position:absolute; top:1rem; right:1rem; width:28px; height:28px; border-radius:50%; border:none; background:rgba(0,0,0,.06); color:var(--ink-soft); cursor:pointer; font-size:.95rem; }
+  .modal-close:hover{ background:rgba(0,0,0,.12); color:var(--ink); }
   button.reset-btn:hover{ background:rgba(255,255,255,.22); }
 
   .vote-bar-items{ max-width:1180px; margin:0 auto; display:flex; gap:.5rem; overflow-x:auto; padding-bottom:.1rem; }
@@ -246,12 +259,27 @@
     <span class="vote-bar-title">Tu voto quedaría así</span>
     <div class="status-banner" id="statusBanner"></div>
     <div class="lc-banner" id="lcBanner" style="display:none;"></div>
+    <button class="ghost-btn" id="blankInfoBtn" type="button">¿Qué pasa si no marco nada?</button>
+    <button class="ghost-btn" id="shareBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+      <span id="shareBtnLabel">Compartir</span>
+    </button>
     <button class="reset-btn" id="resetBtn" type="button">Borrar y empezar de nuevo</button>
   </div>
   <div class="vote-bar-items" id="summaryList"></div>
   <p class="law-note">Mecánica basada en el Código Electoral Provincial de Córdoba —
     <a href="https://www.justiciacordoba.gob.ar/Estatico/JEL/Contenido/Legislacion/files/Electoral/L.9571.pdf" target="_blank" rel="noopener">Ley N° 9.571</a>,
     arts. 53, 54 y 122 (incs. 1 y 2), modificada por Leyes 9.838 y 10.272.</p>
+</div>
+
+<div id="blankModalOverlay" class="modal-overlay">
+  <div class="modal-card">
+    <button class="modal-close" id="blankModalClose" aria-label="Cerrar">✕</button>
+    <h3>¿Qué pasa si no marcás nada?</h3>
+    <p>Si dejás una categoría sin ninguna marca (ni individual ni por lista completa), ese tramo se computa como <strong>voto en blanco</strong>: es un voto <strong>válido</strong>, se cuenta en el escrutinio, pero <strong>no se le asigna a ningún partido</strong>. Podés votar en blanco una sola categoría y elegir partido en las demás — cada tramo se califica por separado.</p>
+    <p>El voto en blanco es distinto del <strong>voto nulo</strong>: el nulo pasa cuando la boleta se usó de forma indebida (por ejemplo, no es la boleta oficial, tiene el encabezado roto, o el sobre trae algo que no corresponde) — un voto nulo directamente <strong>no se cuenta</strong> en el escrutinio, ni siquiera como "en blanco".</p>
+    <p class="modal-note">Dato importante: ni el voto en blanco ni el nulo se suman a ningún candidato — es un mito común que "ayudan" al que va primero. Este simulador te dejó la boleta sin marcas para que veas cómo se ve ese estado.</p>
+  </div>
 </div>
 
 <script>
@@ -470,16 +498,68 @@
     render();
   });
 
-  document.getElementById('resetBtn').addEventListener('click', function(){
+  function resetVote(){
     state.listaCompleta = null;
     CATEGORIES.forEach(function(c){ state.cats[c.code] = null; });
     render();
+  }
+  document.getElementById('resetBtn').addEventListener('click', resetVote);
+
+  // ---- modal: ¿qué pasa si no marco nada? ----
+  const blankModalOverlay = document.getElementById('blankModalOverlay');
+  document.getElementById('blankInfoBtn').addEventListener('click', function(){
+    resetVote();
+    blankModalOverlay.classList.add('open');
   });
+  document.getElementById('blankModalClose').addEventListener('click', function(){
+    blankModalOverlay.classList.remove('open');
+  });
+  blankModalOverlay.addEventListener('click', function(e){
+    if(e.target === blankModalOverlay) blankModalOverlay.classList.remove('open');
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') blankModalOverlay.classList.remove('open');
+  });
+
+  // ---- compartir esta simulación con un link ----
+  function buildShareURL(){
+    const params = new URLSearchParams();
+    if(state.listaCompleta) params.set('lc', state.listaCompleta);
+    CATEGORIES.forEach(function(cat){
+      if(state.cats[cat.code]) params.set('c_'+cat.code, state.cats[cat.code]);
+    });
+    return window.location.origin + window.location.pathname + (params.toString() ? '?'+params.toString() : '');
+  }
+  document.getElementById('shareBtn').addEventListener('click', function(){
+    const url = buildShareURL();
+    const label = document.getElementById('shareBtnLabel');
+    function marcarCopiado(){
+      label.textContent = 'Copiado ✓';
+      setTimeout(function(){ label.textContent = 'Compartir'; }, 1800);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(marcarCopiado).catch(function(){ window.prompt('Copiá el link:', url); });
+    } else {
+      window.prompt('Copiá el link:', url);
+    }
+  });
+
+  function restoreFromURL(){
+    const params = new URLSearchParams(window.location.search);
+    if([...params.keys()].length === 0) return;
+    const lc = params.get('lc');
+    if(lc && PARTIES.some(function(p){ return p.code === lc; })) state.listaCompleta = lc;
+    CATEGORIES.forEach(function(cat){
+      const v = params.get('c_'+cat.code);
+      if(v && PARTIES.some(function(p){ return p.code === v; })) state.cats[cat.code] = v;
+    });
+  }
 
   buildColgroup();
   buildLevelRow();
   buildHead();
   buildBody();
+  restoreFromURL();
   render();
 })();
 </script>
