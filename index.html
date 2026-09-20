@@ -286,6 +286,7 @@
 
   .main-actions{
     display:flex;
+    flex-wrap:wrap;
     gap:.5rem;
     margin-top:.8rem;
   }
@@ -769,6 +770,72 @@
   }
   body.mode-table #tableApp{ display:flex; }
   body.mode-table .page{ display:none; }
+
+  /* ===================== Informe completo por departamento ===================== */
+  #informeApp{
+    position:fixed; inset:0;
+    z-index:60;
+    background:var(--bg);
+    display:none;
+    flex-direction:column;
+  }
+  body.mode-informe #informeApp{ display:flex; }
+  body.mode-informe .page{ display:none; }
+
+  .informe-wrap{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    padding:1.2rem 1.5rem 2rem;
+  }
+  .informe-grid{
+    max-width:1100px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+    gap:1rem;
+  }
+  .informe-section{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:1rem 1.2rem;
+    box-shadow:var(--shadow);
+  }
+  .informe-section h3{
+    font-family:"Lora",Georgia,serif;
+    font-size:1rem;
+    margin:0 0 .3rem;
+    color:var(--wine-dark);
+  }
+  .informe-section .informe-desc{
+    font-size:.72rem;
+    color:var(--ink-soft);
+    margin:0 0 .6rem;
+    line-height:1.4;
+  }
+  .informe-row{
+    display:flex;
+    justify-content:space-between;
+    gap:1rem;
+    padding:.4rem 0;
+    border-bottom:1px dashed var(--border);
+    font-size:.82rem;
+  }
+  .informe-row:last-child{ border-bottom:none; }
+  .informe-row .informe-label{ color:var(--ink-soft); }
+  .informe-row .informe-value{ font-weight:600; color:var(--ink); text-align:right; white-space:nowrap; }
+  .informe-row .informe-value.nodata{ font-weight:400; font-style:italic; color:#b7a99e; }
+
+  @media print{
+    body *{ visibility:hidden; }
+    #informeApp, #informeApp *{ visibility:visible; }
+    #informeApp{ position:static; display:block !important; }
+    .compare-topbar-actions{ display:none; }
+    .informe-wrap{ overflow:visible; }
+    .informe-grid{ display:block; }
+    .informe-section{ break-inside:avoid; margin-bottom:.8rem; box-shadow:none; }
+  }
 
   .table-wrap{
     flex:1 1 auto;
@@ -6487,6 +6554,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
           <span id="mainShareLabel">Compartir</span>
         </button>
+        <button class="main-action-btn" id="informeToggle" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6l3 3v17H6V5l3-3z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/><line x1="9" y1="18" x2="13" y2="18"/></svg>
+          Informe completo
+        </button>
       </div>
     </div>
 
@@ -6595,6 +6666,22 @@
 </div>
 
 
+<div id="informeApp">
+  <div class="compare-topbar">
+    <h2>Informe completo · <span id="informe-dept-name">Departamento</span></h2>
+    <div class="compare-topbar-actions">
+      <select id="informe-dept-select" style="font:inherit; font-size:.82rem; padding:.4rem .6rem; border-radius:8px; border:1px solid var(--border);"></select>
+      <button class="compare-btn" id="informePrint" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir / PDF
+      </button>
+      <button class="compare-btn compare-btn-close" id="informeExit" type="button">✕ Cerrar</button>
+    </div>
+  </div>
+  <div class="informe-wrap" id="informeWrap"></div>
+</div>
+
+
 <div id="overlay">
   <div id="ficha" role="dialog" aria-modal="true" aria-labelledby="ficha-title">
     <div class="ficha-top">
@@ -6603,6 +6690,9 @@
         <div class="depto-sub">Provincia de Córdoba</div>
       </div>
       <div class="ficha-top-actions">
+        <button class="ficha-share-btn" id="ficha-informe-btn" aria-label="Ver informe completo" title="Ver informe completo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6l3 3v17H6V5l3-3z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/><line x1="9" y1="18" x2="13" y2="18"/></svg>
+        </button>
         <button class="ficha-share-btn" id="ficha-share-img" aria-label="Descargar como imagen" title="Descargar como imagen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>
         </button>
@@ -6615,7 +6705,7 @@
 
 <script>
 (function(){
-  function initApp(PBR, CENSO, MATRICULA, SALUD, VITALES, EMPLEO, SOCIODEMO, MERCADOLABORAL, CONDVIDA, EDUCACION2022, SALUD2022, PBR2022){
+  function initApp(PBR, CENSO, MATRICULA, SALUD, VITALES, EMPLEO, SOCIODEMO, MERCADOLABORAL, CONDVIDA){
   // ---------------------------------------------------------------
   // 0) Datos ya cargados (ver loadDataAndInit más abajo) y registro
   //    de nombres/slugs a partir de los departamentos del mapa
@@ -6806,54 +6896,6 @@
       },
       getProvincial: function(code){ return CONDVIDA.provincial[code] || 0; },
       composition: null
-    },
-    educacion2022: {
-      label: 'Educación (indicadores 2022)',
-      desc: 'Nivel educativo alcanzado y tasas de escolarización. Complementa la matrícula con indicadores de resultado. Fuente: DGEyC Córdoba, 2022.',
-      hasYears: false,
-      mainCode: 'SEC_COMPLETO',
-      variables: EDUCACION2022.variables,
-      valueFormat: function(v){ return fmtPct.format(v) + '%'; },
-      getValue: function(slug, code){
-        const d = EDUCACION2022.departments[slug];
-        return d ? (d.values[code] || 0) : 0;
-      },
-      getProvincial: function(code){ return EDUCACION2022.provincial[code] || 0; },
-      composition: null
-    },
-    salud2022: {
-      label: 'Salud (indicadores 2022)',
-      desc: 'Cobertura de salud por edad y hechos vitales. Actualiza con datos 2022 la categoría de Cobertura de Salud (2008). Fuente: DGEyC Córdoba.',
-      hasYears: false,
-      mainCode: 'COBERTURA_TOTAL',
-      variables: SALUD2022.variables,
-      valueFormat: function(v, code){
-        if(code && code.indexOf('COBERTURA_') === 0) return fmtPct.format(v) + '%';
-        return fmtPct.format(v);
-      },
-      getValue: function(slug, code){
-        const d = SALUD2022.departments[slug];
-        return d ? (d.values[code] || 0) : 0;
-      },
-      getProvincial: function(code){ return SALUD2022.provincial[code] || 0; },
-      composition: null
-    },
-    pbr2022: {
-      label: 'Producto Bruto Regional (indicadores 2022)',
-      desc: 'PBR per cápita y participación sectorial. Complementa la serie histórica de Producto Bruto Regional. Fuente: DGEyC Córdoba, 2022.',
-      hasYears: false,
-      mainCode: 'PBR_PERCAPITA',
-      variables: PBR2022.variables,
-      valueFormat: function(v, code){
-        if(code === 'PBR_PERCAPITA') return '$ ' + fmt.format(v);
-        return (v>=0&&code.indexOf('VAR_')===0?'+':'') + fmtPct.format(v) + '%';
-      },
-      getValue: function(slug, code){
-        const d = PBR2022.departments[slug];
-        return d ? (d.values[code] || 0) : 0;
-      },
-      getProvincial: function(code){ return PBR2022.provincial[code] || 0; },
-      composition: { keys:['BIENES_CONST_PCT','SERVICIOS_CONST_PCT'], labels:['Bienes','Servicios'], colors:['#971b2f','#6cace4'] }
     }
   };
 
@@ -7485,6 +7527,72 @@
     if(e.key === 'Escape' && document.body.classList.contains('mode-table')) exitTableMode();
   });
 
+  // ---------------------------------------------------------------
+  // Informe completo por departamento: todas las categorías y
+  // variables que tengamos, en una sola vista imprimible.
+  // ---------------------------------------------------------------
+  const INFORME_ORDER = ['pbr','censo','matricula','salud','vitales','empleo','sociodemo','mercadolaboral','condvida'];
+  const informeDeptSelect = document.getElementById('informe-dept-select');
+  const informeDeptName = document.getElementById('informe-dept-name');
+  const informeWrap = document.getElementById('informeWrap');
+
+  function populateInformeSelect(){
+    const slugs = Object.keys(DEPARTAMENTOS).sort(function(a,b){
+      return DEPARTAMENTOS[a].name.localeCompare(DEPARTAMENTOS[b].name, 'es');
+    });
+    informeDeptSelect.innerHTML = slugs.map(function(slug){
+      return '<option value="'+slug+'">'+DEPARTAMENTOS[slug].name+'</option>';
+    }).join('');
+  }
+
+  function renderInforme(slug){
+    informeDeptName.textContent = DEPARTAMENTOS[slug].name;
+    informeDeptSelect.value = slug;
+
+    const sections = INFORME_ORDER.map(function(key){
+      const cat = DATASETS[key];
+      if(!cat) return '';
+      const year = cat.hasYears ? cat.years[cat.years.length-1] : null;
+      const rows = cat.variables.map(function(v){
+        const val = cat.getValue(slug, v.code, year);
+        const hasVal = val !== null && val !== undefined;
+        const txt = hasVal ? cat.valueFormat(val, v.code) : 'Sin datos';
+        return '<div class="informe-row"><span class="informe-label">'+v.label+'</span>'+
+          '<span class="informe-value'+(hasVal?'':' nodata')+'">'+txt+'</span></div>';
+      }).join('');
+      return '<div class="informe-section">'+
+        '<h3>'+cat.label+'</h3>'+
+        '<p class="informe-desc">'+cat.desc+(year?' · Año '+year:'')+'</p>'+
+        rows+
+        '</div>';
+    }).join('');
+
+    informeWrap.innerHTML = '<div class="informe-grid">'+sections+'</div>';
+  }
+
+  function enterInformeMode(slug){
+    renderInforme(slug);
+    document.body.classList.add('mode-informe');
+    trackEvent('view_informe', { departamento: slug });
+  }
+  function exitInformeMode(){
+    document.body.classList.remove('mode-informe');
+  }
+  document.getElementById('informeToggle').addEventListener('click', function(){
+    enterInformeMode(openSlug || informeDeptSelect.value || Object.keys(DEPARTAMENTOS)[0]);
+  });
+  document.getElementById('ficha-informe-btn').addEventListener('click', function(){
+    if(!openSlug) return;
+    closeFicha();
+    enterInformeMode(openSlug);
+  });
+  document.getElementById('informeExit').addEventListener('click', exitInformeMode);
+  document.getElementById('informePrint').addEventListener('click', function(){ window.print(); });
+  informeDeptSelect.addEventListener('change', function(){ renderInforme(informeDeptSelect.value); });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && document.body.classList.contains('mode-informe')) exitInformeMode();
+  });
+
   document.getElementById('tableDownloadCsv').addEventListener('click', function(){
     trackEvent('download_csv', { category: categorySelect.value });
     const cat = activeCat();
@@ -7801,6 +7909,7 @@
   // Init
   // ---------------------------------------------------------------
   populateVariables(activeCat());
+  populateInformeSelect();
   updateMap();
 
   } // fin de initApp
@@ -7832,12 +7941,9 @@
     fetchJSON('data/empleo.json'),
     fetchJSON('data/sociodemo.json'),
     fetchJSON('data/mercadolaboral.json'),
-    fetchJSON('data/condvida.json'),
-    fetchJSON('data/educacion2022.json'),
-    fetchJSON('data/salud2022.json'),
-    fetchJSON('data/pbr2022.json')
+    fetchJSON('data/condvida.json')
   ]).then(function(results){
-    initApp(results[0], results[1], results[2], results[3], results[4], results[5], results[6], results[7], results[8], results[9], results[10], results[11]);
+    initApp(results[0], results[1], results[2], results[3], results[4], results[5], results[6], results[7], results[8]);
   }).catch(function(err){
     console.error('Error cargando datos del mapa interactivo:', err);
     showLoadError((err && err.message ? err.message : 'No se pudieron cargar los datos.') + ' — Recargá la página o revisá tu conexión.');
