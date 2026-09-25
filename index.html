@@ -815,17 +815,22 @@
     line-height:1.4;
   }
   .informe-row{
-    display:flex;
-    justify-content:space-between;
-    gap:1rem;
     padding:.4rem 0;
     border-bottom:1px dashed var(--border);
     font-size:.82rem;
   }
+  .informe-row-main{ display:flex; justify-content:space-between; gap:1rem; }
   .informe-row:last-child{ border-bottom:none; }
   .informe-row .informe-label{ color:var(--ink-soft); }
   .informe-row .informe-value{ font-weight:600; color:var(--ink); text-align:right; white-space:nowrap; }
   .informe-row .informe-value.nodata{ font-weight:400; font-style:italic; color:#b7a99e; }
+  .informe-compare{ font-size:.68rem; color:var(--ink-soft); text-align:right; margin-top:.15rem; }
+  .informe-trend-title{
+    font-size:.68rem; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--ink-soft); margin:.2rem 0 .3rem;
+  }
+  .informe-sparkline{ width:100%; margin-bottom:.7rem; }
+  .informe-sparkline svg{ width:100%; height:44px; display:block; }
 
   @media print{
     body *{ visibility:hidden; }
@@ -7545,6 +7550,13 @@
     }).join('');
   }
 
+  function compareVsProvincial(val, provVal){
+    if(provVal === 0 || provVal === null || provVal === undefined) return '';
+    const diff = ((val - provVal) / Math.abs(provVal)) * 100;
+    const arrow = diff >= 0 ? '▲' : '▼';
+    return '<div class="informe-compare">'+arrow+' '+fmtPct.format(Math.abs(diff))+'% vs. promedio provincial</div>';
+  }
+
   function renderInforme(slug){
     informeDeptName.textContent = DEPARTAMENTOS[slug].name;
     informeDeptSelect.value = slug;
@@ -7553,16 +7565,40 @@
       const cat = DATASETS[key];
       if(!cat) return '';
       const year = cat.hasYears ? cat.years[cat.years.length-1] : null;
+
+      let trendHtml = '';
+      if(cat.hasYears){
+        const series = cat.years.map(function(y){ return { y: y, v: cat.getValue(slug, cat.mainCode, y) }; })
+          .filter(function(p){ return p.v !== null && p.v !== undefined; });
+        if(series.length >= 2){
+          const first = series[0].v, last = series[series.length-1].v;
+          const growth = first > 0 ? ((last-first)/first*100) : 0;
+          const mainLabel = cat.variables.find(function(v){ return v.code === cat.mainCode; }).label;
+          trendHtml = '<div class="informe-trend-title">Evolución '+cat.years[0]+'–'+cat.years[cat.years.length-1]+' · '+mainLabel+
+            ' <span style="color:'+(growth>=0?'#4a7fb0':'#971b2f')+'">('+(growth>=0?'+':'')+fmtPct.format(growth)+'%)</span></div>'+
+            '<div class="informe-sparkline">'+sparklineSvg(series)+'</div>';
+        }
+      }
+
       const rows = cat.variables.map(function(v){
         const val = cat.getValue(slug, v.code, year);
         const hasVal = val !== null && val !== undefined;
         const txt = hasVal ? cat.valueFormat(val, v.code) : 'Sin datos';
-        return '<div class="informe-row"><span class="informe-label">'+v.label+'</span>'+
-          '<span class="informe-value'+(hasVal?'':' nodata')+'">'+txt+'</span></div>';
+        let compareHtml = '';
+        if(hasVal){
+          const provVal = cat.getProvincial(v.code, year);
+          if(typeof provVal === 'number') compareHtml = compareVsProvincial(val, provVal);
+        }
+        return '<div class="informe-row">'+
+          '<div class="informe-row-main"><span class="informe-label">'+v.label+'</span>'+
+          '<span class="informe-value'+(hasVal?'':' nodata')+'">'+txt+'</span></div>'+
+          compareHtml+
+          '</div>';
       }).join('');
       return '<div class="informe-section">'+
         '<h3>'+cat.label+'</h3>'+
         '<p class="informe-desc">'+cat.desc+(year?' · Año '+year:'')+'</p>'+
+        trendHtml+
         rows+
         '</div>';
     }).join('');
@@ -7583,8 +7619,9 @@
   });
   document.getElementById('ficha-informe-btn').addEventListener('click', function(){
     if(!openSlug) return;
+    const slugToOpen = openSlug;
     closeFicha();
-    enterInformeMode(openSlug);
+    enterInformeMode(slugToOpen);
   });
   document.getElementById('informeExit').addEventListener('click', exitInformeMode);
   document.getElementById('informePrint').addEventListener('click', function(){ window.print(); });
