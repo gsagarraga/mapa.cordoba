@@ -71,8 +71,44 @@
   .info-strip b{ color:var(--ink); }
 
   /* ============== la boleta, calcada del diseño real ============== */
-  .ballot-wrap{ flex:1 1 700px; min-width:0; min-height:0; display:flex; }
+  .ballot-row{ display:flex; gap:1rem; flex:1 1 auto; min-height:0; }
+  .ballot-wrap{ flex:1 1 auto; min-width:0; min-height:0; display:flex; }
   .ballot-sheet{ background:#fff; border:1px solid #b8b8b8; box-shadow:var(--shadow); overflow-x:hidden; overflow-y:auto; position:relative; flex:1 1 auto; min-height:0; }
+
+  .status-panel{
+    flex:0 0 300px;
+    min-width:240px;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    gap:.65rem;
+    background:linear-gradient(160deg, var(--wine-dark), var(--wine) 55%, var(--gold-dark));
+    color:#fff;
+    border-radius:14px;
+    padding:1rem 1.1rem;
+    box-shadow:var(--shadow);
+    overflow-y:auto;
+    transition:background .25s ease;
+  }
+  .status-panel.panel-state-red{ background:linear-gradient(160deg, #7a2016, #c0392b 55%, #8f2a1f); }
+  .status-panel.panel-state-green{ background:linear-gradient(160deg, #12361f, #2f8f52 55%, #1f6b3c); }
+  .status-panel.panel-state-neutral{ background:linear-gradient(160deg, var(--wine-dark), var(--wine) 55%, var(--gold-dark)); }
+
+  .status-panel .vote-bar-title{ font-family:"Lora",Georgia,serif; font-size:.92rem; font-weight:600; margin-top:.3rem; }
+  .status-panel .vote-bar-items{ display:flex; flex-direction:column; gap:.4rem; flex:1 1 auto; min-height:0; overflow-y:auto; padding-right:.2rem; }
+  .status-panel .vote-chip{ flex:0 0 auto; min-width:0; background:rgba(255,255,255,.14); border-left:4px solid transparent; }
+  .status-panel .vote-chip.conflict{ background:rgba(255,255,255,.2); border-left-color:#ffd3cd; }
+  .status-panel .vote-chip.ok{ background:rgba(255,255,255,.14); border-left-color:#c4f0d3; }
+  .status-panel .vote-gap{ display:none; }
+  .status-panel .law-note{ max-width:none; margin:.3rem 0 0; text-align:left; font-size:.6rem; color:rgba(255,255,255,.65); }
+  .status-panel .law-note a{ color:rgba(255,255,255,.85); }
+  .status-why{ font-size:.78rem; line-height:1.55; color:rgba(255,255,255,.94); }
+  .status-why strong{ color:#fff; }
+  .status-why ul{ margin:.4rem 0 0; padding-left:1.1rem; }
+  .status-why li{ margin-bottom:.25rem; }
+  .status-actions{ display:flex; flex-direction:column; gap:.5rem; }
+  .status-actions .ghost-btn{ width:100%; justify-content:center; }
+  .status-actions .reset-btn{ width:100%; margin-left:0; justify-content:center; }
   .ballot-scroll{ position:relative; width:100%; }
 
   .ballot-topbar{ display:flex; align-items:center; gap:1rem; padding:.8rem 1rem; border-bottom:3px solid var(--ink); }
@@ -127,16 +163,24 @@
   .cand-text .role:first-child{ margin-top:0; }
   .cand-text .note-line{ display:block; color:#8a7a70; font-size:.56rem; font-style:italic; margin-top:.15rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* estados marcado / anulado */
+  /* estados marcado: verde = voto válido sin conflicto, rojo = lista completa + marca individual a la vez */
   .lc-cell.marked{ box-shadow:inset 0 0 0 3px var(--gold); }
   .lc-cell.marked .checkbox-btn{ background:var(--gold); border-color:var(--gold-dark); }
   .lc-cell.marked .checkbox-btn svg{ opacity:1; transform:scale(1); }
+  .lc-cell.marked.state-ok{ background:#173a24 !important; box-shadow:inset 0 0 0 3px #2f8f52; }
+  .lc-cell.marked.state-ok .checkbox-btn{ background:#2f8f52; border-color:#1f6b3c; }
+  .lc-cell.marked.state-bad{ background:#551a13 !important; box-shadow:inset 0 0 0 3px #c0392b; }
+  .lc-cell.marked.state-bad .checkbox-btn{ background:#c0392b; border-color:#8f2a1f; }
 
   td.cat-cell.marked{ box-shadow:inset 0 0 0 3px var(--wine); }
   td.cat-cell.marked .checkbox-btn{ background:var(--wine); border-color:var(--wine-dark); }
   td.cat-cell.marked .checkbox-btn svg{ opacity:1; transform:scale(1); }
+  td.cat-cell.marked.state-ok{ background:#d7ecdf !important; box-shadow:inset 0 0 0 3px #2f8f52; }
+  td.cat-cell.marked.state-ok .checkbox-btn{ background:#2f8f52; border-color:#1f6b3c; }
+  td.cat-cell.marked.state-bad{ background:#f4d6d2 !important; box-shadow:inset 0 0 0 3px #c0392b; }
+  td.cat-cell.marked.state-bad .checkbox-btn{ background:#c0392b; border-color:#8f2a1f; }
 
-  td.overridden{ opacity:.55; }
+  td.overridden{ opacity:.85; }
   td.overridden .cand-text{ text-decoration:line-through; text-decoration-color:#999; }
 
   .watermark{ position:absolute; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center; overflow:hidden; opacity:.08; z-index:2; }
@@ -147,7 +191,7 @@
   .vote-bar-head{ max-width:1180px; margin:0 auto; display:flex; align-items:center; gap:.9rem; margin-bottom:.4rem; }
   .vote-bar-title{ font-family:"Lora",Georgia,serif; font-size:1rem; font-weight:600; flex:0 0 auto; }
   .lc-banner{ background:rgba(255,255,255,.2); padding:.25rem .7rem; border-radius:999px; font-size:.7rem; font-weight:600; }
-  .status-banner{ display:flex; align-items:center; gap:.35rem; padding:.25rem .75rem; border-radius:999px; font-size:.72rem; font-weight:700; }
+  .status-banner{ display:flex; align-items:center; gap:.5rem; padding:.55rem .8rem; border-radius:12px; font-size:.85rem; font-weight:700; }
   .status-banner svg{ width:14px; height:14px; flex:0 0 auto; }
   .status-banner.status-red{ background:#c0392b; }
   .status-banner.status-green{ background:#2f8f52; }
@@ -184,7 +228,9 @@
     html,body{ height:auto; }
     body{ overflow:visible; }
     main{ flex:1 1 auto; }
+    .ballot-row{ flex-direction:column; }
     .ballot-wrap{ flex:0 0 auto; }
+    .status-panel{ flex:0 0 auto; }
     .ballot-sheet{ overflow-x:auto; overflow-y:visible; max-height:none; }
     .ballot-scroll{ min-width:820px; }
     .vote-bar-head{ flex-wrap:wrap; }
@@ -222,6 +268,7 @@
     <span><b>Ojo:</b> si marcás lista completa, anula cualquier marca individual distinta.</span>
   </div>
 
+  <div class="ballot-row">
   <div class="ballot-wrap">
     <div class="ballot-sheet">
       <div class="watermark"><span>SIMULADOR&nbsp;&nbsp;·&nbsp;&nbsp;EJERCICIO DE PRÁCTICA&nbsp;&nbsp;·&nbsp;&nbsp;SIMULADOR&nbsp;&nbsp;·&nbsp;&nbsp;EJERCICIO DE PRÁCTICA</span></div>
@@ -252,25 +299,27 @@
       </div>
     </div>
   </div>
-</main>
 
-<div class="vote-bar">
-  <div class="vote-bar-head">
-    <span class="vote-bar-title">Tu voto quedaría así</span>
+  <aside class="status-panel">
     <div class="status-banner" id="statusBanner"></div>
+    <div class="status-why" id="statusWhy"></div>
     <div class="lc-banner" id="lcBanner" style="display:none;"></div>
-    <button class="ghost-btn" id="blankInfoBtn" type="button">¿Qué pasa si no marco nada?</button>
-    <button class="ghost-btn" id="shareBtn" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
-      <span id="shareBtnLabel">Compartir</span>
-    </button>
-    <button class="reset-btn" id="resetBtn" type="button">Borrar y empezar de nuevo</button>
+    <div class="status-actions">
+      <button class="ghost-btn" id="blankInfoBtn" type="button">¿Qué pasa si no marco nada?</button>
+      <button class="ghost-btn" id="shareBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>
+        <span id="shareBtnLabel">Compartir</span>
+      </button>
+      <button class="reset-btn" id="resetBtn" type="button">Borrar y empezar de nuevo</button>
+    </div>
+    <div class="vote-bar-title">Tu voto quedaría así</div>
+    <div class="vote-bar-items" id="summaryList"></div>
+    <p class="law-note">Basado en el Código Electoral Provincial de Córdoba —
+      <a href="https://www.justiciacordoba.gob.ar/Estatico/JEL/Contenido/Legislacion/files/Electoral/L.9571.pdf" target="_blank" rel="noopener">Ley N° 9.571</a>,
+      arts. 53, 54 y 122 (incs. 1 y 2), modif. Leyes 9.838 y 10.272.</p>
+  </aside>
   </div>
-  <div class="vote-bar-items" id="summaryList"></div>
-  <p class="law-note">Mecánica basada en el Código Electoral Provincial de Córdoba —
-    <a href="https://www.justiciacordoba.gob.ar/Estatico/JEL/Contenido/Legislacion/files/Electoral/L.9571.pdf" target="_blank" rel="noopener">Ley N° 9.571</a>,
-    arts. 53, 54 y 122 (incs. 1 y 2), modificada por Leyes 9.838 y 10.272.</p>
-</div>
+</main>
 
 <div id="blankModalOverlay" class="modal-overlay">
   <div class="modal-card">
@@ -330,6 +379,8 @@
   const summaryList = document.getElementById('summaryList');
   const lcBanner = document.getElementById('lcBanner');
   const statusBanner = document.getElementById('statusBanner');
+  const statusWhy = document.getElementById('statusWhy');
+  const statusPanel = document.querySelector('.status-panel');
 
   const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"/></svg>';
   const arrowSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17L17 7"/></svg>';
@@ -423,16 +474,25 @@
   }
 
   function render(){
+    const anyConflict = CATEGORIES.some(function(cat){ return isOverridden(cat.code) && !!state.cats[cat.code]; });
+    const anyVote = !!state.listaCompleta || CATEGORIES.some(function(cat){ return !!state.cats[cat.code]; });
+    const conflictCats = CATEGORIES.filter(function(cat){ return isOverridden(cat.code) && !!state.cats[cat.code]; });
+
     body.querySelectorAll('td.lc-cell').forEach(function(td){
       const marked = state.listaCompleta === td.getAttribute('data-party');
       td.classList.toggle('marked', marked);
+      td.classList.toggle('state-bad', marked && anyConflict);
+      td.classList.toggle('state-ok', marked && !anyConflict);
     });
     CATEGORIES.forEach(function(cat){
       body.querySelectorAll('td.cat-cell[data-cat="'+cat.code+'"]').forEach(function(td){
         const partyCode = td.getAttribute('data-party');
         const marked = state.cats[cat.code] === partyCode;
+        const conflict = marked && isOverridden(cat.code);
         td.classList.toggle('marked', marked);
-        td.classList.toggle('overridden', marked && isOverridden(cat.code));
+        td.classList.toggle('overridden', conflict);
+        td.classList.toggle('state-bad', conflict);
+        td.classList.toggle('state-ok', marked && !conflict);
       });
     });
 
@@ -467,19 +527,27 @@
     }
 
     // estado general: rojo si hay marcas que se pisan (mal uso), verde si no
-    const anyConflict = CATEGORIES.some(function(cat){ return isOverridden(cat.code) && !!state.cats[cat.code]; });
-    const anyVote = !!state.listaCompleta || CATEGORIES.some(function(cat){ return !!state.cats[cat.code]; });
     const okIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M4 12l6 6L20 6"/></svg>';
     const badIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>';
     if(anyConflict){
       statusBanner.className = 'status-banner status-red';
-      statusBanner.innerHTML = badIcon + '<span>Hay marcas que se pisan entre sí</span>';
+      statusPanel.className = 'status-panel panel-state-red';
+      statusBanner.innerHTML = badIcon + '<span>Estás usando la boleta mal</span>';
+      statusWhy.innerHTML = '<strong>Marcaste Lista completa y, además, elegiste individualmente en:</strong>'+
+        '<ul>'+conflictCats.map(function(c){ return '<li>'+c.label+'</li>'; }).join('')+'</ul>'+
+        'Esas marcas individuales no valen: con Lista completa marcada, esa categoría se vota igual con el partido de Lista completa. Para que tu elección individual cuente, no marques Lista completa.';
     } else if(anyVote){
       statusBanner.className = 'status-banner status-green';
-      statusBanner.innerHTML = okIcon + '<span>Sin contradicciones</span>';
+      statusPanel.className = 'status-panel panel-state-green';
+      statusBanner.innerHTML = okIcon + '<span>Estás usando la boleta bien</span>';
+      statusWhy.innerHTML = state.listaCompleta
+        ? 'Marcaste <strong>Lista completa</strong> y nada más — vale para las '+CATEGORIES.length+' categorías, sin contradicciones.'
+        : 'Marcaste categoría por categoría sin usar Lista completa — es un <strong>voto cruzado válido</strong>, podés elegir partidos distintos en cada tramo sin problema.';
     } else {
       statusBanner.className = 'status-banner status-neutral';
+      statusPanel.className = 'status-panel panel-state-neutral';
       statusBanner.innerHTML = '<span>Todavía no marcaste nada</span>';
+      statusWhy.innerHTML = 'Una boleta sin ninguna marca es un <strong>voto en blanco</strong> en las '+CATEGORIES.length+' categorías: válido, pero no se asigna a ningún partido.';
     }
   }
 
