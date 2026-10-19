@@ -102,7 +102,9 @@
   table.bus{ border-collapse:collapse; width:100%; table-layout:fixed; }
   table.bus thead th{ padding:0; border:1px solid #ddd; border-top:none; background:#fff; }
   table.bus thead th.gap-head{ background:var(--bg); border:none; }
-  .level-cell{ text-align:center; font-size:.75em; font-weight:700; letter-spacing:.08em; color:#555; padding:.4em; background:#eee; border:1px solid #ddd; }
+  .level-cell{ text-align:center; font-size:.75em; font-weight:700; letter-spacing:.08em; color:#fff; padding:.4em; background:#222; border:1px solid #ddd; text-transform:uppercase; }
+  .level-cell.lvl-prov{ background:#222; }
+  .level-cell.lvl-muni{ background:#8a8a8a; }
   .col-head{ display:flex; align-items:center; justify-content:center; gap:.4em; height:3.4em; overflow:hidden; color:var(--bus-magenta); font-weight:700; font-size:.72em; text-align:center; padding:0 .4em; line-height:1.2; text-transform:uppercase; }
   .col-head svg{ width:1.05em; height:1.05em; flex:0 0 auto; }
 
@@ -112,16 +114,19 @@
   table.bus tbody td.cat-cell{ background:var(--bus-graycell); }
   table.bus tbody td.lc-cell{ background:var(--bus-black); }
 
-  /* celda de lista completa */
+  /* celda de lista completa: [lista + emblema] [nombre] [cara + casillero] */
   .lc-cell{ padding:.45em .7em !important; overflow:hidden; }
-  .party-row{ display:flex; align-items:center; gap:.55em; }
-  .party-idnum{ flex:0 0 auto; text-align:center; line-height:1.1; }
-  .party-idnum .lista-lbl{ color:#bbb; font-size:.56em; text-transform:uppercase; display:block; }
-  .party-idnum .num{ color:#fff; font-weight:700; font-size:.82em; display:block; }
-  .party-logo{ flex:0 0 auto; width:2.2em; height:2.2em; border-radius:.3em; display:flex; align-items:center; justify-content:center; color:#fff; background:var(--pc); }
-  .party-logo svg{ width:1.35em; height:1.35em; }
-  .party-name{ flex:1 1 auto; min-width:0; font-size:.78em; font-weight:700; color:#fff; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .lc-photorow{ display:flex; align-items:center; gap:.5em; margin-top:.3em; }
+  .lc-row{ display:flex; align-items:center; gap:.6em; }
+  .lc-id{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:.15em; line-height:1.05; }
+  .lc-id .lista-lbl{ color:#bbb; font-size:.56em; text-transform:uppercase; }
+  .lc-id .num{ color:#fff; font-weight:700; font-size:.82em; }
+  .emblem{ width:2.3em; height:2.3em; background:#fff; border-radius:.25em; display:flex; align-items:center; justify-content:center; padding:.35em; color:var(--pc); box-shadow:inset 0 0 0 1px rgba(0,0,0,.25); }
+  .emblem svg{ width:100%; height:100%; display:block; }
+  .party-name{ flex:1 1 auto; min-width:0; font-size:.74em; font-weight:700; color:#fff; line-height:1.15; text-align:center; text-transform:uppercase; display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+  .lc-photo{ flex:0 0 auto; display:flex; align-items:center; gap:.4em; }
+  .lc-box{ display:flex; flex-direction:column; align-items:center; gap:.2em; width:2.4em; }
+  .lc-box .checkbox-btn{ margin-left:0; }
+  .lc-cap{ font-size:.42em; line-height:1.1; color:#9a9a9a; text-align:center; }
 
   /* "foto": silueta de busto recortada, sobre fondo claro del color del partido */
   .avatar{
@@ -147,6 +152,12 @@
   .cand-text .role{ display:block; color:#555; font-size:.78em; text-transform:uppercase; letter-spacing:.02em; font-weight:600; margin-top:.3em; }
   .cand-text .role:first-child{ margin-top:0; }
   .cand-text .note-line{ display:block; color:#8a7a70; font-size:.8em; font-style:italic; margin-top:.15em; }
+
+  .cand-text.center{ text-align:center; }
+  .list-cols{ flex:1 1 auto; min-width:0; display:flex; gap:.6em; font-size:.62em; line-height:1.25; color:var(--ink); }
+  .list-cols > div{ flex:1 1 0; min-width:0; }
+  .list-cols .role{ display:block; color:#333; font-weight:700; margin-bottom:.15em; }
+  .list-cols .nm{ display:block; overflow-wrap:anywhere; }
 
   /* estados: verde = válido, rojo = mal uso */
   .lc-cell.marked{ box-shadow:inset 0 0 0 .22em var(--gold); }
@@ -327,13 +338,14 @@
 
 <script>
 (function(){
+  // layout: 'gv' = solo cuadro (Gobernador y Vice), 'list' = solo cuadro con listas, 'face' = con cara
   const CATEGORIES = [
-    { code:'gob', label:'Gobernador y Vice', short:'Gobernador y Vice', photo:true, level:'prov' },
-    { code:'legdist', label:'Legislador Distrito Único', short:'Leg. Distrito Único', photo:false, level:'prov' },
-    { code:'legdep', label:'Legislador Departamental', short:'Leg. Departamental', photo:true, level:'prov' },
-    { code:'tribunal', label:'Tribunal de Cuentas Provincial', short:'Trib. Cuentas Prov.', photo:false, level:'prov' },
-    { code:'intendente', label:'Intendente y Concejales', short:'Intendente y Concejales', photo:true, level:'muni' },
-    { code:'tribmun', label:'Tribunal de Cuentas Municipal', short:'Trib. Cuentas Municipal', photo:false, level:'muni' }
+    { code:'gob', label:'Gobernador y Vice', short:'Gobernador y Vice', layout:'gv', roles:['Gobernador','Vice'], level:'prov' },
+    { code:'legdist', label:'Legislador Distrito Único', short:'Leg. Distrito Único', layout:'list', level:'prov' },
+    { code:'legdep', label:'Legislador Departamental', short:'Leg. Departamental', layout:'face', roles:['Titular','Suplente'], level:'prov' },
+    { code:'tribunal', label:'Tribunal de Cuentas Provincial', short:'Trib. Cuentas Prov.', layout:'list', level:'prov' },
+    { code:'intendente', label:'Intendente y Concejales', short:'Intendente y Concejales', layout:'face', roles:['Intendente','Suplente'], level:'muni' },
+    { code:'tribmun', label:'Tribunal de Cuentas Municipal', short:'Trib. Cuentas Municipal', layout:'list', level:'muni' }
   ];
   const LEVELS = [
     { code:'prov', label:'Nivel Provincial' },
@@ -402,7 +414,7 @@
       const count = CATEGORIES.filter(function(c){ return c.level === lvl.code; }).length;
       const span = count + (i === 0 ? 1 : 0); // el primer nivel suma la columna de lista completa
       if(i > 0) html += '<th class="gap-head"></th>';
-      html += '<th class="level-cell" colspan="'+span+'">'+lvl.label+'</th>';
+      html += '<th class="level-cell lvl-'+lvl.code+'" colspan="'+span+'">'+lvl.label+'</th>';
     });
     document.getElementById('levelRow').innerHTML = html;
   }
@@ -417,37 +429,77 @@
     headEl.innerHTML = html;
   }
 
+  // Emblemas partidarios de ejemplo (solo aparecen en la celda de Lista completa, como en la boleta real)
+  const EMBLEMS = {
+    p1:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+    p2:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>',
+    p3:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="12" r="6" opacity=".9"/><circle cx="15" cy="12" r="6" opacity=".55"/></svg>',
+    p4:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 17H3z"/></svg>',
+    p5:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.6 6.1 20.7l1.2-6.6L2.5 9.5l6.6-.9z"/></svg>',
+    p6:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 20C5 11 10 5 20 4c0 10-5 16-14 16z"/><path d="M5 20L14 11" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>'
+  };
+
+  // Nombres ficticios para las listas (Titulares / Suplentes) de los tramos "solo cuadro"
+  const FIRST = ['Ana','Luis','Marta','Pablo','Sonia','Julián','Carla','Hernán','Paula','Gonzalo','Lucía','Mariano','Romina','Sergio','Natalia','Facundo','Silvia','Matías','Verónica','Emilio','Rocío','Gustavo','Daniela','Ariel'];
+  const LAST = ['Quiroga','Molina','Sosa','Pereyra','Luna','Barrios','Cabrera','Domínguez','Funes','Giménez','Herrera','Ledesma','Maldonado','Navarro','Olivera','Paz','Rivero','Salas','Toledo','Vera','Zárate','Bustos','Cuello','Dávila'];
+  function fakeName(seed, k){
+    return LAST[(seed*3 + k*11 + 5) % LAST.length] + ', ' + FIRST[(seed*5 + k*7) % FIRST.length].charAt(0) + '.';
+  }
+  function lastFirst(full){
+    const i = full.lastIndexOf(' ');
+    if(i < 0) return full;
+    return full.slice(i+1) + ', ' + full.slice(0, 1) + '.';
+  }
+  function listFor(pIdx, cat, cIdx, info){
+    const seed = pIdx*13 + cIdx*17;
+    if(cat.code === 'legdist'){
+      return { tit:[fakeName(seed,0), fakeName(seed,1), fakeName(seed,2)], sup:[fakeName(seed,3), fakeName(seed,4)] };
+    }
+    return { tit:[lastFirst(info.tit), fakeName(seed,1)], sup:[info.sup ? lastFirst(info.sup) : fakeName(seed,2), fakeName(seed,3)] };
+  }
+
   function buildBody(){
-    bodyEl.innerHTML = PARTIES.map(function(party){
+    bodyEl.innerHTML = PARTIES.map(function(party, pIdx){
       let row = '<tr>';
+      // Lista completa: [lista + emblema] [nombre del partido] [cara + casillero]
       row += '<td class="lc-cell" data-kind="lc" data-party="'+party.code+'" style="--pc:'+party.color+'">'+
-        '<div class="party-row">'+
-          '<div class="party-idnum"><span class="lista-lbl">Lista</span><span class="num">'+party.num+'</span></div>'+
-          '<div class="party-logo" title="'+party.name+'">'+personSvg+'</div>'+
+        '<div class="lc-row">'+
+          '<div class="lc-id"><span class="lista-lbl">Lista</span><span class="num">'+party.num+'</span>'+
+            '<span class="emblem" title="Emblema de '+party.name+'">'+EMBLEMS[party.code]+'</span></div>'+
           '<div class="party-name">'+party.name+'</div>'+
-        '</div>'+
-        '<div class="lc-photorow">'+
-          '<span class="avatar">'+bustSvg+'</span>'+
-          '<button type="button" class="checkbox-btn" data-kind="lc" data-party="'+party.code+'" aria-pressed="false" aria-label="Lista completa: '+party.name+'">'+checkSvg+'</button>'+
-        '</div>'+
-        '</td>';
+          '<div class="lc-photo"><span class="avatar">'+bustSvg+'</span>'+
+            '<div class="lc-box"><button type="button" class="checkbox-btn" data-kind="lc" data-party="'+party.code+'" aria-pressed="false" aria-label="Lista completa: '+party.name+'">'+checkSvg+'</button>'+
+            '<span class="lc-cap">Voto lista completa</span></div></div>'+
+        '</div></td>';
       let prev = CATEGORIES[0].level;
-      CATEGORIES.forEach(function(cat){
+      CATEGORIES.forEach(function(cat, cIdx){
         if(cat.level !== prev){ row += '<td class="gap-cell"></td>'; prev = cat.level; }
         const info = party.c[cat.code];
         if(!info){
-          row += '<td class="cat-cell empty" data-cat="'+cat.code+'" data-party="'+party.code+'"><div class="cell-empty"><span>Sin candidatos<br>en esta categoría</span></div></td>';
-        } else {
-          const supLine = info.sup ? '<span class="role">Suplente</span>'+info.sup : '';
-          const noteLine = info.note ? '<span class="note-line">'+info.note+'</span>' : '';
-          const avatarHtml = cat.photo ? '<span class="avatar">'+bustSvg+'</span>' : '';
-          row += '<td class="cat-cell" data-cat="'+cat.code+'" data-party="'+party.code+'" style="--pc:'+party.color+'">'+
-            '<div class="cell-inner">'+
-            '<div class="cand-text"><span class="role">Titular</span><b>'+info.tit+'</b>'+supLine+noteLine+'</div>'+
-            avatarHtml+
-            '<button type="button" class="checkbox-btn" data-kind="cat" data-cat="'+cat.code+'" data-party="'+party.code+'" aria-pressed="false" aria-label="'+cat.label+': '+party.name+'">'+checkSvg+'</button>'+
-            '</div></td>';
+          // sin candidatos: celda gris en blanco, como en la boleta real
+          row += '<td class="cat-cell empty" data-cat="'+cat.code+'" data-party="'+party.code+'" title="'+party.name+' no presenta candidatos en este tramo"></td>';
+          return;
         }
+        const btn = '<button type="button" class="checkbox-btn" data-kind="cat" data-cat="'+cat.code+'" data-party="'+party.code+'" aria-pressed="false" aria-label="'+cat.label+': '+party.name+'">'+checkSvg+'</button>';
+        let inner;
+        if(cat.layout === 'gv'){
+          // solo cuadro: texto centrado + casillero (sin cara ni emblema)
+          inner = '<div class="cand-text center"><span class="role">'+cat.roles[0]+'</span><b>'+info.tit+'</b>'+
+                  '<span class="role">'+cat.roles[1]+'</span>'+(info.sup || '')+'</div>'+btn;
+        } else if(cat.layout === 'list'){
+          // solo cuadro: listas de titulares y suplentes + casillero
+          const l = listFor(pIdx, cat, cIdx, info);
+          const names = function(arr){ return arr.map(function(n){ return '<span class="nm">'+n+'</span>'; }).join(''); };
+          inner = '<div class="list-cols"><div><span class="role">Titulares:</span>'+names(l.tit)+'</div>'+
+                  '<div><span class="role">Suplentes:</span>'+names(l.sup)+'</div></div>'+btn;
+        } else {
+          // con cara: texto + cara + casillero
+          const supLine = info.sup ? '<span class="role">'+cat.roles[1]+'</span>'+info.sup : '';
+          const noteLine = info.note ? '<span class="note-line">'+info.note+'</span>' : '';
+          inner = '<div class="cand-text"><span class="role">'+cat.roles[0]+'</span><b>'+info.tit+'</b>'+supLine+noteLine+'</div>'+
+                  '<span class="avatar">'+bustSvg+'</span>'+btn;
+        }
+        row += '<td class="cat-cell" data-cat="'+cat.code+'" data-party="'+party.code+'" style="--pc:'+party.color+'"><div class="cell-inner">'+inner+'</div></td>';
       });
       row += '</tr>';
       return row;
