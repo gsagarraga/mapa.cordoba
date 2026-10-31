@@ -1393,6 +1393,65 @@
   @media (min-width:901px){ .fx-grid{ grid-template-columns:minmax(220px,270px) minmax(0,1fr); } }
   .fx-chart svg{ display:block; }
   .pdf-chart svg{ height:auto; }
+
+  /* ===== rev. 10: barra del título arriba; columna de controles angosta, mapa más grande ===== */
+  @media (min-width:901px){
+    .page{ max-width:none; padding:0 1.6rem; }
+    header.hero{ max-width:none; padding:.75rem 0 .7rem; margin-bottom:.8rem; }
+    header.hero h1{ font-size:clamp(1.6rem,1.9vw,2.2rem); }
+    header.hero p.hero-sub{ margin-top:.3rem; }
+    .content{ max-width:none; gap:1.2rem; padding-bottom:.4rem; }
+    .content .map-card{ padding:.5rem .7rem .7rem; }
+    .map-card .map-toolbar{ margin-bottom:.2rem; }
+    .panel{ grid-template-columns:minmax(290px,340px) minmax(0,1fr); }
+    .panel-controls{ padding:1.2rem 1.3rem; }
+    .panel-ranking{ padding:1.2rem 1.6rem 1rem; }
+    .panel-ranking .ranking-row .rk-name{ flex:0 0 210px; }
+    footer{ padding:.1rem 1rem .35rem; }
+  }
+  @media (min-width:901px) and (max-width:1500px){
+    .lbl-full{ display:none; } .lbl-short{ display:inline; }
+    .hero-btn.primary{ padding:.75rem 1.2rem; font-size:.92rem; white-space:nowrap; }
+    .panel-ranking .ranking-row .rk-name{ flex-basis:170px; }
+  }
+  @media (min-width:901px) and (max-height:780px){
+    header.hero{ padding:.5rem 0 .5rem; margin-bottom:.55rem; }
+    .panel-controls{ padding-top:.85rem; padding-bottom:.85rem; }
+    .panel-ranking .ranking-row{ font-size:.7rem; line-height:1.15; }
+  }
+
+  /* ===== rev. 11: bloque centrado y proporcionado, barra del título arriba ===== */
+  @media (min-width:901px){
+    .page{ max-width:var(--pagew, 1500px); width:100%; margin:0 auto; padding:0 26px; }
+    header.hero{ padding:1rem 0 .95rem; margin-bottom:1rem; gap:2rem; align-items:center; }
+    header.hero h1{ font-size:clamp(1.7rem,2vw,2.3rem); line-height:1.1; }
+    header.hero p.hero-sub{ margin:.55rem 0 0; white-space:nowrap; font-size:clamp(.98rem,1vw,1.1rem); }
+    .content{ gap:20px; }
+    .panel{ grid-template-columns:var(--ctlw, 320px) minmax(0,1fr); }
+    .panel-ranking .ranking-row .rk-name{ flex:0 0 46%; }
+  }
+  @media (min-width:901px) and (max-width:1300px){
+    .sub-full{ display:none; } .sub-short{ display:inline; }
+  }
+  @media (min-width:901px) and (max-height:780px){
+    header.hero{ padding:.7rem 0 .65rem; margin-bottom:.7rem; }
+    header.hero h1{ font-size:1.6rem; }
+    header.hero p.hero-sub{ margin-top:.35rem; font-size:.95rem; }
+  }
+
+  /* rev. 11b: título y botón en la misma fila, bajada debajo a todo el ancho */
+  @media (min-width:901px){
+    header.hero{ display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title btn" "sub sub"; column-gap:2rem; row-gap:0; align-items:center; }
+    header.hero .hero-text{ display:contents; }
+    header.hero .hero-title{ grid-area:title; }
+    header.hero .hero-actions{ grid-area:btn; }
+    header.hero p.hero-sub{ grid-area:sub; margin-top:.6rem; white-space:normal; max-width:none; }
+    .hero-btn.primary{ padding:.7rem 1.35rem; }
+  }
+  @media (min-width:901px) and (max-height:780px){
+    header.hero p.hero-sub{ margin-top:.4rem; }
+    .hero-btn.primary{ padding:.55rem 1.1rem; }
+  }
 </style>
 </head>
 <body>
@@ -1413,7 +1472,7 @@
     <path style="fill:#866d4b;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:.75732;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" d="M11892.905 4431.405c-59.111 570.7479-86.403 1166.4767-159.163 1724.4855-42.666-656.3106-326.878-585.4467-270.808-785.861 155.464-514.1271-310.504-302.0498-215.179-860.5025-244.949 580.4847 180.439 468.7634 40.564 729.7834-307.278 483.744 251.845 461.5956 104.305 982.7131l-816.288-1538.4623 491.009 1662.9934c-305.985-587.7453-538.259-406.1413-568.272-612.6003-66.179-533.0663-405.986-150.0655-545.0926-699.2307 11.267 630.0535 354.7286 355.5074 332.6186 650.8878-85.032 567.8335 418.7 318.9782 493.713 858.5687-7.916 6.3889-15.762 12.8167-23.566 19.3371L9410.8184 5466.7151l1121.4776 1320.3393c-1.82 2.1675-3.598 4.3985-5.408 6.5747-501.591-427.1779-648.4106-173.23-753.3176-353.0961-260.834-469.4306-432.363 13.0268-766.839-443.9805 246.213 579.9486 461.629 196.6242 551.66 478.7874 132.911 555.3118 503.4826 143.4074 774.5656 603.3185-5.903 10.7678-11.698 21.5855-17.384 32.4864l-1651.1186-510.1136 1530.2006 801.7175c-.596 1.9038-.955 3.8946-1.545 5.8011-621.2776-203.4645-662.1876 86.0764-826.7176-40.6079-418.406-336.3035-395.782 175.1723-877.712-121.824 446.494 444.182 501.835 7.7965 691.507 235.1395 331.954 463.6876 519.941-56.3503 943.3856 265.3055-1.338 12.5984-2.402 25.2259-3.477 37.9008l-1720.2686 150.8296 1721.0416 164.3656c.301 3.3605.838 6.7001 1.158 10.0553-656.6626 38.7574-587.3656 324.1595-787.3136 266.8524-512.659-158.5891-303.434 308.6423-860.714 210.0013 578.427 248.5534 469.056-177.4951 728.98-35.9671 482.395 311.011 462.999-251.6791 985.8806-97.8459 2.866 9.55 5.864 19.1367 8.885 28.619l-1553.7656 778.899 1634.8926-473.3724c-538.0286 291.3675-371.9826 513.9105-573.2946 541.8265-532.922 62.5879-152.433 405.568-701.937 541.0517 629.423-6.9503 357.206-352.507 652.103-328.3433 562.3256 88.3518 325.387-409.5789 849.1236-486.909 8.123 10.1582 16.387 20.1905 24.724 30.166L9431.2934 10416.633l1320.4306-1109.1775c2.368 1.9937 4.576 4.2078 6.954 6.1879-427.351 501.2599-174.04 648.6726-353.866 753.3746-469.3626 260.314 12.428 433.242-444.6506 767.297 579.7326-245.485 197.0256-461.85 479.0326-551.494 555.063-132.133 144.189-504.4089 604.586-775.0316l-480.578 1669.9536c135.966-155.223 700.49-1561.8599 819.764-1527.2462-200.275 621.1472 88.051 660.7112-37.859 825.6962-334.58 419.949 176.511 395.648-118.599 879.065 442.248-448.419 6.085-502.042 232.563-692.656 461.723-333.543-57.149-520.59 261.15-944.8126l194.704 1724.4856c65.098-568.308 85.714-1175.396 170.365-1724.4856 47.122 646.7966 328.169 576.4526 273.126 776.1926-153.458 514.731 311.416 300.909 218.27 859.729 242.683-581.437-182.124-468.218-43.268-729.784 303.819-482.447-247.698-461.144-110.1-974.591l824.4 1527.247-468.216-1563.5996c272.945 483.4796 484.505 335.4321 509.552 530.9966 57.116 534.117 403.354 157.061 533.117 708.513-.566-630.154-348.539-361.728-321.415-656.689 94.51-565.398-411.497-326.9449-478.647-864.3705l1350.564 1097.9625c-360.232-450.3158-752.539-895.9888-1097.913-1347.0241 498.255 433.989 647.858 180.8848 751 361.9905 255.98 472.1014 432.845-8.7237 762.59 451.7148-240.218-582.461-459.908-201.1229-547.025-484.2012-127.633-558.6514-504.587-145.8335-771.088-616.4671l1666.185 500.0582c-504.112-279.1851-1037.578-541.7087-1527.498-827.2425 632.281 207.8465 671.193-85.3816 837.149 41.3815 419.703 334.6815 395.023-177.1721 878.099 117.9565-448.208-442.4498-501.733-5.8259-692.28-232.4323-335.943-465.4446-522.377 65.3403-953.044-268.0127l1731.859-188.7304-1728.769-158.1777c-.04-.3837.04-.7772 0-1.1596 659.567-41.4453 588.329-327.0886 788.86-270.7199 513.459 155.9748 301.779-310.4397 859.555-214.6421-144.922-61.4001-246.638-80.9077-321.802-77.7353-225.493 9.5172-211.698 222.7205-407.178 117.5698-483.678-308.3604-461.282 253.0919-983.95 102.8735l1539.473-815.2534c-555.209 150.1374-1129.24 357.9887-1674.297 481.8813 597.657-303.2155 415.879-538.8693 623.129-567.3515 532.997-61.9357 153.428-405.0801 703.097-539.8927-629.431 6.1806-358.009 352.0952-652.876 327.571-568.001-89.9546-320.931 419.0756-866.122 487.6825l1091.731-1362.4943-1333.179 1116.9127c-.417-.349-.742-.8118-1.159-1.1596 436.334-512.9967 176.637-659.7729 356.957-766.5239 467.46-263.7195-15.4-433.0184 439.242-770.3913-577.936 249.6954-193.821 463.2824-475.169 554.9757-558.262 137.1925-133.62 510.9098-608.836 785.4743l478.26-1679.6233c-121.623 151.5704-713.222 1570.0366-807.402 1539.6224 201.862-628.5726-89.335-666.9096 36.314-833.0436 332.754-421.402-178.274-394.7548 114.736-879.4528-440.299 450.3391-3.824 502.2188-229.472 693.8164-461.599 336.5158 62.228 520.8433-259.992 949.0664zm8.499 1786.751c948.172-.0002 1717.565 770.24 1717.565 1719.4577 0 949.218-769.392 1719.4571-1717.565 1719.4571s-1717.952-770.2393-1717.952-1719.4571c0-949.2173 769.779-1719.4577 1717.952-1719.4577z" id="path7664"/>
   </g>
 </svg><h1>Mapa interactivo de <span>Córdoba</span></h1></div>
-  <p class="hero-sub"><span class="sub-full">Datos oficiales de los 26 departamentos de la provincia. Elegí una categoría, una variable y un año para colorear el mapa, y tocá un departamento para ver su ficha completa.</span><span class="sub-short">Datos oficiales de los 26 departamentos. Tocá uno para ver su ficha.</span></p>
+  <p class="hero-sub">Datos oficiales de los 26 departamentos. Tocá uno para ver su ficha.</p>
   </div>
   <nav class="hero-actions" aria-label="Simulador">
     <a class="hero-btn primary sim-link" href="simulador-bus.html" aria-label="Simulador de Boleta Única de Sufragio (BUS)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><rect x="7" y="7" width="3" height="3" rx=".5"/><path d="M12 8.5h5"/><rect x="7" y="13" width="3" height="3" rx=".5"/><path d="M12 14.5h5"/><path d="M7.4 8.6l.8.8 1.4-1.7"/></svg><span class="lbl-full">Simulador de Boleta Única de Sufragio (BUS)</span><span class="lbl-short" aria-hidden="true">Simulador de la BUS</span><span class="hero-badge">Nuevo</span></a>
@@ -7484,7 +7543,12 @@
     const padH = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2;
     const h = wrap.clientHeight || (content.clientHeight - 60);
     const w = Math.round(h * (mapRatio || 0.65) + padH);
-    page.style.setProperty('--mapw', Math.min(w, Math.round(window.innerWidth * 0.5)) + 'px');
+    const mw = Math.min(w, Math.round(window.innerWidth * 0.46));
+    page.style.setProperty('--mapw', mw + 'px');
+    // ancho total = mapa + controles + ranking (el bloque se centra; la barra del título se alinea a ese ancho)
+    const ctlW = window.innerWidth >= 1500 ? 340 : 300, rkW = window.innerWidth >= 1500 ? 470 : 400;
+    page.style.setProperty('--pagew', Math.min(window.innerWidth, mw + ctlW + rkW + 20 + 2*26) + 'px');
+    page.style.setProperty('--ctlw', ctlW + 'px');
   }
   fitLayout();
   window.addEventListener('resize', fitLayout);
