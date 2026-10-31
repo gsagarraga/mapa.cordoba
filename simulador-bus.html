@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador de Boleta Única de Sufragio · Córdoba</title>
+<title>Simulador de Boleta Única de Sufragio (BUS) · Córdoba</title>
 <meta name="description" content="Practicá cómo se vota con Boleta Única de Sufragio (BUS) en Córdoba: marcá lista completa o elegí categoría por categoría, y mirá en vivo si estás votando bien o mal y por qué.">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,9 +61,18 @@
   .header-flag svg{ height:28px; width:auto; display:block; border-radius:4px; box-shadow:0 4px 14px -4px rgba(90,20,25,.45), 0 0 0 1px rgba(0,0,0,.06); }
   h1{ font-family:"Lora",Georgia,serif; font-size:1.25rem; margin:0; color:var(--ink); white-space:nowrap; }
   h1 span{ color:var(--wine); }
-  .back-link{ margin-left:auto; display:inline-flex; align-items:center; gap:.35rem; font-size:.78rem; color:var(--ink-soft); text-decoration:none; white-space:nowrap; }
-  .back-link:hover{ color:var(--wine-dark); }
-  .back-link svg{ width:14px; height:14px; }
+  .back-btn{
+    display:inline-flex; align-items:center; gap:.45rem; flex:0 0 auto;
+    padding:.42rem 1rem .42rem .7rem; border-radius:999px;
+    background:var(--wine); color:#fff; text-decoration:none;
+    font-size:.82rem; font-weight:600; white-space:nowrap;
+    box-shadow:0 8px 18px -10px rgba(151,27,47,.85);
+    transition:transform .15s ease, background .15s ease;
+  }
+  .back-btn:hover{ background:var(--wine-dark); transform:translateX(-2px); }
+  .back-btn:focus-visible{ outline:3px solid #6cace4; outline-offset:2px; }
+  .back-btn svg{ width:18px; height:18px; flex:0 0 auto; }
+  @media (pointer:coarse){ .back-btn{ min-height:40px; } }
 
   main{ flex:1 1 auto; min-height:0; padding:0 20px 14px; display:flex; flex-direction:column; }
 
@@ -233,37 +242,62 @@
   .modal-close{ position:absolute; top:1rem; right:1rem; width:28px; height:28px; border-radius:50%; border:none; background:rgba(0,0,0,.06); color:var(--ink-soft); cursor:pointer; font-size:.95rem; }
   .modal-close:hover{ background:rgba(0,0,0,.12); color:var(--ink); }
 
+  /* aviso para girar el teléfono (solo celular en vertical) */
+  .rotate-hint{ display:none; }
+  .rotate-ico{ flex:0 0 auto; width:34px; height:34px; animation:rotPhone 2.8s ease-in-out infinite; }
+  @keyframes rotPhone{ 0%,15%{ transform:rotate(0deg); } 55%,85%{ transform:rotate(-90deg); } 100%{ transform:rotate(0deg); } }
+  @media (prefers-reduced-motion: reduce){ .rotate-ico{ animation:none; } }
+  .rotate-hint .rh-text{ flex:1 1 auto; display:flex; flex-direction:column; line-height:1.3; font-size:.8rem; }
+  .rotate-hint .rh-text strong{ font-size:.95rem; }
+  .rotate-hint button{ flex:0 0 auto; width:32px; height:32px; border-radius:50%; border:none; background:rgba(255,255,255,.2); color:#fff; font-size:.9rem; cursor:pointer; }
+
   /* ============== celular: la página scrollea y la boleta se desliza de costado ============== */
-  @media (max-width:760px){
+  @media (max-width:1100px), (max-height:520px){
     html,body{ height:auto; }
     body{ overflow:visible; }
-    header{ height:auto; flex-wrap:wrap; padding:.6rem 12px; }
+    header{ height:auto; min-height:48px; flex-wrap:wrap; padding:.5rem 12px; position:sticky; top:0; z-index:30; background:var(--bg); box-shadow:0 1px 0 var(--border); }
     h1{ white-space:normal; font-size:1.1rem; }
     main{ padding:0 12px 16px; }
     .info-strip{ white-space:normal; flex-wrap:wrap; gap:.3rem 1rem; }
     .ballot-row{ position:static; }
     .ballot-wrap{ margin-right:0; }
-    .ballot-sheet{ font-size:11px; overflow-x:auto; --rowh:6.6em; }
+    .ballot-sheet{ font-size:clamp(9px, calc((100vw - 24px) / 98), 15px); overflow-x:auto; --rowh:6.6em; }
     .ballot-scroll{ min-width:98em; }
     .status-panel{ position:static; width:auto; font-size:14px; margin-top:12px; }
+  }
+  @media (max-height:520px){
+    header{ position:static; }
+  }
+  @media (max-width:760px) and (orientation:portrait){
+    header .header-flag{ margin-left:auto; }
+    h1{ flex:1 1 100%; }
+    .ballot-sheet{ font-size:11px; }
+    .rotate-hint{ display:flex; align-items:center; gap:.75rem; margin:10px 12px; padding:.65rem .8rem; border-radius:14px; background:linear-gradient(135deg, var(--wine-dark), var(--wine)); color:#fff; box-shadow:var(--shadow); }
+    .rotate-hint.dismissed{ display:none; }
   }
 </style>
 </head>
 <body>
 
 <header>
+  <a class="back-btn" href="index.html" aria-label="Volver al mapa interactivo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
+    <span>Volver al mapa</span>
+  </a>
   <div class="header-flag">
     <svg viewBox="0 0 90 60" xmlns="http://www.w3.org/2000/svg">
       <rect width="90" height="60" fill="#fff"/><rect width="31" height="60" fill="#971b2f"/><rect x="59" width="31" height="60" fill="#6cace4"/>
       <circle cx="45" cy="30" r="8" fill="#8f734a"/><circle cx="45" cy="30" r="4" fill="#fdf8ee"/>
     </svg>
   </div>
-  <h1>Simulador de <span>Boleta Única de Sufragio</span></h1>
-  <a class="back-link" href="index.html">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-    Volver al mapa interactivo
-  </a>
+  <h1>Simulador de <span>Boleta Única de Sufragio (BUS)</span></h1>
 </header>
+
+<div class="rotate-hint" id="rotateHint" role="status">
+  <svg class="rotate-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M10.5 18.5h3"/></svg>
+  <div class="rh-text"><strong>Girá el teléfono</strong><span>La boleta se ve mejor en horizontal.</span></div>
+  <button type="button" id="rotateHintClose" aria-label="Cerrar aviso">✕</button>
+</div>
 
 <main>
   <div class="info-strip">
@@ -684,6 +718,13 @@
       state.cats[cat.code] = parseList(params.get('c_'+cat.code));
     });
   }
+
+  const rotateHint = document.getElementById('rotateHint');
+  try{ if(sessionStorage.getItem('rotateHintDismissed') === '1') rotateHint.classList.add('dismissed'); }catch(e){}
+  document.getElementById('rotateHintClose').addEventListener('click', function(){
+    rotateHint.classList.add('dismissed');
+    try{ sessionStorage.setItem('rotateHintDismissed', '1'); }catch(e){}
+  });
 
   buildColgroup();
   buildLevelRow();
