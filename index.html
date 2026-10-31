@@ -628,7 +628,7 @@
   .fx-up{ color:#4a7fb0; font-weight:600; } .fx-down{ color:var(--wine); font-weight:600; }
   .fx-chart{ background:#fff; border:1px solid var(--border); border-radius:14px; padding:.8rem .95rem .6rem; }
   .fx-chart svg{ width:100%; height:170px; display:block; overflow:visible; }
-  @media (max-width:900px){ .fx-chart svg{ height:170px !important; } }
+
   .fx-chart text{ font-family:"Rubik",sans-serif; font-size:11px; fill:#7a6a63; }
   .fx-two{ display:grid; grid-template-columns:1fr; gap:1.1rem; }
   .fx-table{ width:100%; border-collapse:collapse; font-size:.82rem; }
@@ -1226,7 +1226,7 @@
     .ficha-act span{ font-size:.72rem; }
     #ficha-informe-btn span{ display:none; }
     .fx-cards{ grid-template-columns:1fr 1fr; }
-    .fx-chart svg{ height:120px !important; }
+
   }
 
   /* --- rev. 7b: correcciones --- */
@@ -1341,6 +1341,58 @@
   .pdf-doc th:first-child, .pdf-doc td:first-child{ text-align:left; padding-left:0; white-space:normal; }
   .pdf-doc td.nd{ color:#7a6a63; font-style:italic; }
   .pdf-note{ margin-top:18px; font-size:9.5px; color:#7a6a63; line-height:1.5; }
+
+  /* ===== rev. 9: escritorio a pantalla completa, sin scroll ===== */
+  @media (min-width:901px){
+    html, body{ height:100%; overflow:hidden; }
+    body{ display:flex; flex-direction:column; }
+    .page{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; width:100%; }
+    header.hero{ flex:0 0 auto; padding:1rem 0 .9rem; margin-bottom:1rem; }
+    header.hero h1{ font-size:clamp(1.7rem,2.1vw,2.4rem); }
+    header.hero p.hero-sub{ margin-top:.45rem; }
+    .content{ flex:1 1 auto; min-height:0; height:auto; display:grid; grid-template-columns:var(--mapw, 34%) minmax(0,1fr); gap:1.4rem; align-items:stretch; padding-bottom:.5rem; }
+    .content .map-block{ height:100%; min-height:0; position:static; padding:0; }
+    .content .map-card{ height:100%; padding:.7rem .9rem .9rem; }
+    .content .svg-wrap{ flex:1 1 auto; min-height:0; }
+    .content #cordoba-map{ width:100%; height:100%; max-height:none; }
+    .panel{ display:grid; grid-template-columns:minmax(0,1.12fr) minmax(0,1fr); min-height:0; overflow:hidden; }
+    .panel-controls{ display:flex; flex-direction:column; overflow:hidden; min-height:0; padding:1.4rem 1.6rem; }
+    .panel-controls .main-actions{ margin-top:auto; padding-top:1rem; grid-template-columns:1fr 1fr; }
+    .panel-ranking{ border-top:0; border-left:1px solid var(--border); display:flex; flex-direction:column; min-height:0; padding:1.4rem 1.5rem 1.2rem; }
+    .panel-ranking .ranking{ display:flex; flex-direction:column; justify-content:space-between; align-items:stretch; columns:auto; flex:1 1 auto; min-height:0; overflow:hidden; gap:0; }
+    .panel-ranking .ranking-row{ width:100%; }
+    .panel-ranking .ranking-row{ margin:0; }
+    .panel-ranking .ranking-row .rk-name{ flex:0 0 46%; }
+    footer{ flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:1rem; padding:.2rem 1rem .5rem; }
+    footer .signature{ margin:0; }
+    footer .social-icons a{ width:22px; height:22px; }
+  }
+  @media (min-width:901px) and (max-height:780px){
+    header.hero{ padding:.7rem 0 .6rem; margin-bottom:.7rem; }
+    header.hero h1{ font-size:1.6rem; }
+    header.hero p.hero-sub{ font-size:.95rem; margin-top:.25rem; }
+    .hero-btn.primary{ padding:.7rem 1.2rem; font-size:.92rem; }
+    .panel-controls{ padding:1rem 1.3rem; }
+    .panel-controls h2{ font-size:1.15rem; margin-bottom:.15rem; }
+    .panel-controls > p#category-desc{ margin-bottom:.6rem; font-size:.82rem; }
+    .panel-controls .control-row{ margin-bottom:.55rem; }
+    .control-row label{ margin-bottom:.2rem; }
+    select#variable-select, select#category-select{ padding:.38rem .6rem; font-size:.84rem; }
+    .legend-scale{ margin-top:.45rem; }
+    .insight{ margin-top:.6rem; font-size:.8rem; line-height:1.45; }
+    .panel-controls .main-actions{ padding-top:.6rem; gap:.4rem; }
+    .panel-controls .main-action-btn{ padding:.4rem .5rem; font-size:.78rem; }
+    .panel-ranking{ padding:1rem 1.2rem .9rem; }
+    .panel-ranking h3{ margin-bottom:.4rem; font-size:.98rem; }
+    .ranking-row{ font-size:.72rem; }
+    .ranking-row .rk-track{ height:7px; }
+  }
+  @media (min-width:901px) and (max-height:560px){ html, body{ overflow:auto; } body{ display:block; } }
+  /* ficha: un poco más ancha y con aire */
+  #ficha{ max-width:1180px; }
+  @media (min-width:901px){ .fx-grid{ grid-template-columns:minmax(220px,270px) minmax(0,1fr); } }
+  .fx-chart svg{ display:block; }
+  .pdf-chart svg{ height:auto; }
 </style>
 </head>
 <body>
@@ -7401,13 +7453,42 @@
 
 
   // --- ajuste de la portada: el contenido ocupa el alto restante y la columna del mapa sigue su proporción ---
+  let mapRatio = null;
+  function cropMainMap(){
+    const svg = document.getElementById('cordoba-map');
+    try{
+      let bb = null; const root = svg.getCTM();
+      svg.querySelectorAll('.depto').forEach(function(el){
+        const r = el.getBBox(), m = el.getCTM(); if(!m || !root) return;
+        const t = root.inverse().multiply(m);
+        const p1 = new DOMPoint(r.x, r.y).matrixTransform(t), p2 = new DOMPoint(r.x+r.width, r.y+r.height).matrixTransform(t);
+        const x1 = Math.min(p1.x,p2.x), y1 = Math.min(p1.y,p2.y), x2 = Math.max(p1.x,p2.x), y2 = Math.max(p1.y,p2.y);
+        bb = bb ? [Math.min(bb[0],x1), Math.min(bb[1],y1), Math.max(bb[2],x2), Math.max(bb[3],y2)] : [x1,y1,x2,y2];
+      });
+      if(bb && bb[2] > bb[0]){
+        const pad = 8;
+        svg.setAttribute('viewBox', (bb[0]-pad)+' '+(bb[1]-pad)+' '+(bb[2]-bb[0]+2*pad)+' '+(bb[3]-bb[1]+2*pad));
+        mapRatio = (bb[2]-bb[0]+2*pad) / (bb[3]-bb[1]+2*pad);
+      }
+    }catch(e){}
+  }
   function fitLayout(){
     const page = document.querySelector('.page');
     if(!page) return;
-    page.style.removeProperty('--content-h'); page.style.removeProperty('--mapw');
+    if(!mapRatio) cropMainMap();
+    if(window.innerWidth <= 900){ page.style.removeProperty('--mapw'); return; }
+    const content = document.querySelector('.content'), card = document.querySelector('.content .map-card');
+    const wrap = document.querySelector('.content .svg-wrap');
+    if(!content || !card || !wrap) return;
+    const cs = getComputedStyle(card);
+    const padH = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2;
+    const h = wrap.clientHeight || (content.clientHeight - 60);
+    const w = Math.round(h * (mapRatio || 0.65) + padH);
+    page.style.setProperty('--mapw', Math.min(w, Math.round(window.innerWidth * 0.5)) + 'px');
   }
   fitLayout();
   window.addEventListener('resize', fitLayout);
+  window.addEventListener('resize', function(){ if(openSlug && overlay.classList.contains('open')) fitFichaChart(); });
   function activeCat(){ return DATASETS[categorySelect.value]; }
   function currentYear(){ return activeCat().years[+yearSlider.value]; }
   function currentVar(){ return variableSelect.value; }
@@ -7619,9 +7700,9 @@
     if(a >= 100) return fmt.format(v);
     return fmtPct.format(v);
   }
-  function bigChartSvg(series, selYear, wOverride){
+  function bigChartSvg(series, selYear, wOverride, hOverride){
     const cw = fichaFields.clientWidth || 900;
-    const w = wOverride || Math.round(Math.max(280, cw > 860 ? cw - 250 - 21 - 34 : cw - 34)), h = 170, pl = 46, pr = 12, pt = 12, pb = 22;
+    const w = wOverride || Math.round(Math.max(280, cw > 860 ? cw - 250 - 21 - 34 : cw - 34)), h = Math.round(hOverride || 170), pl = 48, pr = 14, pt = 12, pb = 24;
     const vals = series.map(function(p){ return p.v; });
     let min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
     if(min === max){ min = min*0.9; max = max*1.1 || 1; }
@@ -7648,7 +7729,7 @@
               '<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="4.5" fill="#971b2f" stroke="#fff" stroke-width="2"/>';
       }
     });
-    return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'+g+
+    return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" style="width:100%;height:auto;max-width:'+w+'px">'+g+
       '<path d="'+area+'" fill="rgba(151,27,47,.10)"/>'+
       '<polyline points="'+pts.join(' ')+'" fill="none" stroke="#971b2f" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'+
       dot+'</svg>';
@@ -7683,7 +7764,27 @@
     }catch(e){}
   }
 
+  let fichaChart = null;
+  function fitFichaChart(){
+    if(!fichaChart) return;
+    const box = fichaFields.querySelector('.fx-chart'); if(!box) return;
+    const cs = getComputedStyle(box);
+    const w = Math.round(box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight));
+    const ficha = document.getElementById('ficha');
+    let h = window.innerWidth <= 900 ? 160 : 170;
+    box.querySelector('svg').outerHTML = bigChartSvg(fichaChart.series, fichaChart.year, w, h);
+    if(window.innerWidth > 900){
+      // espacio sobrante: lo que falta para el alto máximo + la diferencia entre columnas
+      const maxH = parseFloat(getComputedStyle(ficha).maxHeight) || window.innerHeight*0.94;
+      const slack = maxH - ficha.scrollHeight - 18;
+      const side = fichaFields.querySelector('.fx-side'), main = fichaFields.querySelector('.fx-main');
+      const colDiff = (side && main) ? Math.max(0, side.offsetHeight - main.offsetHeight) : 0;
+      h = Math.max(window.innerHeight < 700 ? 80 : 120, Math.min(340, h + slack + colDiff));
+      box.querySelector('svg').outerHTML = bigChartSvg(fichaChart.series, fichaChart.year, w, h);
+    }
+  }
   function renderFicha(slug){
+    fichaChart = null;
     const dep = DEPARTAMENTOS[slug];
     const catKey = categorySelect.value;
     const cat = activeCat();
@@ -7729,6 +7830,7 @@
         main += '<div class="fx-chart"><div class="fx-h">Evolución '+series[0].y+'–'+series[series.length-1].y+' · '+varLabel+
           ' <span class="'+(growth>=0?'fx-up':'fx-down')+'">('+(growth>=0?'+':'')+fmtPct.format(growth)+'%)</span></div>'+
           bigChartSvg(series, year)+'</div>';
+        fichaChart = { series: series, year: year };
       }
     }
 
@@ -7781,6 +7883,7 @@
 
     const mapBox = document.getElementById('fx-map');
     ensureFichaMap(mapBox);
+    requestAnimationFrame(fitFichaChart);
     mapBox.insertAdjacentHTML('beforeend', '<div class="fx-map-cap">Tocá otro departamento para cambiar la ficha</div>');
     fichaMiniSvg.querySelectorAll('.depto').forEach(function(el){ el.classList.toggle('fx-on', el.getAttribute('data-slug') === slug); });
 
@@ -7814,6 +7917,7 @@
     openSlug = slug;
     renderFicha(slug);
     overlay.classList.add('open');
+    fitFichaChart();
     trackEvent('view_ficha', { departamento: slug, category: categorySelect.value });
   }
 
@@ -8461,7 +8565,7 @@
           const growth = first > 0 ? ((last-first)/first*100) : 0;
           const ml = cat.variables.find(function(v){ return v.code === cat.mainCode; });
           chart = '<div class="pdf-chart"><div class="pdf-ch-t">Evolución '+series[0].y+'–'+series[series.length-1].y+' · '+(ml ? ml.label : '')+
-            ' <b class="'+(growth>=0?'fx-up':'fx-down')+'">('+(growth>=0?'+':'')+fmtPct.format(growth)+'%)</b></div>'+bigChartSvg(series, year, 690)+'</div>';
+            ' <b class="'+(growth>=0?'fx-up':'fx-down')+'">('+(growth>=0?'+':'')+fmtPct.format(growth)+'%)</b></div>'+bigChartSvg(series, year, 690, 130)+'</div>';
         }
       }
       const rows = cat.variables.map(function(v){
